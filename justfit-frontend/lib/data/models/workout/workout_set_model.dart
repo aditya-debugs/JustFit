@@ -32,14 +32,15 @@ class WorkoutSetModel {
   // From Map (Firestore)
   factory WorkoutSetModel.fromMap(Map<String, dynamic> map) {
     return WorkoutSetModel(
-      setId: map['setId'],
-      setNumber: map['setNumber'],
-      setTitle: map['setTitle'],
+      setId: map['setId'] ?? '',                              // ✅ Default to empty string
+      setNumber: map['setNumber'] ?? 1,                       // ✅ Default to 1
+      setTitle: map['setTitle'] ?? 'Set',                     // ✅ Default to 'Set'
       setDescription: map['setDescription'],
-      exercises: (map['exercises'] as List<dynamic>)
-          .map((ex) => ExerciseModel.fromMap(ex as Map<String, dynamic>))
-          .toList(),
-      estimatedDuration: map['estimatedDuration'],
+      exercises: (map['exercises'] as List<dynamic>?)
+              ?.map((ex) => ExerciseModel.fromMap(ex as Map<String, dynamic>))
+              .toList() ??
+          [],                                                 // ✅ Default to empty list
+      estimatedDuration: map['estimatedDuration'] ?? 0,       // ✅ Default to 0
       rounds: map['rounds'] ?? 1,
       restBetweenRounds: map['restBetweenRounds'],
       setType: SetType.values.firstWhere(

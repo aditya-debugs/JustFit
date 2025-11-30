@@ -64,12 +64,12 @@ class ExerciseModel {
   // From Map (Firestore)
   factory ExerciseModel.fromMap(Map<String, dynamic> map) {
     return ExerciseModel(
-      exerciseId: map['exerciseId'],
-      exerciseName: map['exerciseName'],
+      exerciseId: map['exerciseId'] ?? '',                    // ✅ Default to empty string
+      exerciseName: map['exerciseName'] ?? 'Unknown',         // ✅ Default to 'Unknown'
       exerciseDescription: map['exerciseDescription'],
-      category: map['category'],
-      targetMuscle: map['targetMuscle'],
-      difficulty: map['difficulty'],
+      category: map['category'] ?? 'strength',                // ✅ Default to 'strength'
+      targetMuscle: map['targetMuscle'] ?? 'full_body',       // ✅ Default to 'full_body'
+      difficulty: map['difficulty'] ?? 'beginner',            // ✅ Default to 'beginner'
       measurement: ExerciseMeasurement.values.firstWhere(
         (e) => e.toString().split('.').last == map['measurement'],
         orElse: () => ExerciseMeasurement.reps,
@@ -78,22 +78,30 @@ class ExerciseModel {
       duration: map['duration'],
       distance: map['distance']?.toDouble(),
       restAfter: map['restAfter'],
-      sets: map['sets'], // ✅ ADD THIS
+      sets: map['sets'],
       thumbnailUrl: map['thumbnailUrl'],
       videoUrl: map['videoUrl'],
       gifUrl: map['gifUrl'],
-      instructions: List<String>.from(map['instructions'] ?? []),
+      instructions: map['instructions'] != null 
+          ? List<String>.from(map['instructions']) 
+          : [],                                               // ✅ Default to empty list
       breathingRhythm: map['breathingRhythm'] != null 
-          ? List<String>.from(map['breathingRhythm']) 
+          ? (map['breathingRhythm'] is String 
+              ? [map['breathingRhythm'] as String]  // Convert string to list
+              : List<String>.from(map['breathingRhythm']))
           : null,
       actionFeeling: map['actionFeeling'] != null 
-          ? List<String>.from(map['actionFeeling']) 
+          ? (map['actionFeeling'] is String 
+              ? [map['actionFeeling'] as String]  // Convert string to list
+              : List<String>.from(map['actionFeeling']))
           : null,
-      commonMistakes: map['commonMistakes'] != null
-          ? List<String>.from(map['commonMistakes'])
+      commonMistakes: map['commonMistakes'] != null 
+          ? List<String>.from(map['commonMistakes']) 
           : null,
-      tips: map['tips'] != null ? List<String>.from(map['tips']) : null,
-      equipment: map['equipment'] ?? 'none',
+      tips: map['tips'] != null 
+          ? List<String>.from(map['tips']) 
+          : null,
+      equipment: map['equipment'] ?? 'none',                  // ✅ Default to 'none'
       easierVariation: map['easierVariation'],
       harderVariation: map['harderVariation'],
     );

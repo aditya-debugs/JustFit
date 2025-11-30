@@ -7,6 +7,9 @@ import '../widgets/workout_detail_screen.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../../../data/datasources/body_part_workouts_data.dart';
 import '../../../data/models/workout/simple_workout_models.dart';
+import '../../../core/services/discovery_workout_service.dart';
+import '../../../data/models/workout/workout_set_model.dart';
+
 
 // Body Specific Section
 class BodySpecificSection extends StatelessWidget {
@@ -200,17 +203,37 @@ class WorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Navigate to workout detail screen
+      onTap: () async {
+        // Fetch full workout from Firestore
+        final workoutId = workout['id'] as String;
+        final discoveryService = Get.find<DiscoveryWorkoutService>();
+        
+        // Show loading
+        Get.dialog(
+          Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+        
+        final fullWorkout = await discoveryService.getWorkoutById(workoutId);
+        
+        // Close loading
+        Get.back();
+        
+        if (fullWorkout == null) {
+          Get.snackbar('Error', 'Workout not found');
+          return;
+        }
+        
+        // Navigate to workout detail screen with real data
         WorkoutDetailScreen.navigateTo(
           context,
-          workoutTitle: workout['title'],
-          duration: workout['duration'],
-          calories: workout['calories'],
-          heroImagePath: workout['image'],
-          equipment: workout['equipment'] ?? 'Yoga Mat',
-          focusZones: workout['focusZones'] ?? workout['type'] ?? 'FullBody',
-          workoutSets: _getDummyWorkoutSets(),
+          workoutTitle: fullWorkout.title,
+          duration: fullWorkout.duration,
+          calories: fullWorkout.calories,
+          heroImagePath: fullWorkout.imageUrl,
+          equipment: fullWorkout.equipment,
+          focusZones: fullWorkout.focusZones,
+          workoutSets: _convertToWorkoutSets(fullWorkout.workoutSets),
         );
       },
       child: Container(
@@ -339,7 +362,31 @@ class WorkoutCard extends StatelessWidget {
     );
   }
 
-  // Helper method to generate dummy workout sets
+  // Convert WorkoutSetModel from Firestore to WorkoutSet for UI
+  List<WorkoutSet> _convertToWorkoutSets(List<WorkoutSetModel> models) {
+    return models.map((setModel) {
+      return WorkoutSet(
+        setName: setModel.setTitle,
+        exercises: setModel.exercises.map((exerciseModel) {
+          return Exercise(
+            name: exerciseModel.exerciseName,
+            duration: exerciseModel.duration ?? 30,
+            thumbnailPath: exerciseModel.thumbnailUrl,
+            actionSteps: exerciseModel.instructions.isNotEmpty 
+                ? exerciseModel.instructions 
+                : null,
+            breathingRhythm: exerciseModel.breathingRhythm,
+            actionFeeling: exerciseModel.actionFeeling,
+            commonMistakes: (exerciseModel.commonMistakes?.isNotEmpty ?? false)
+                ? exerciseModel.commonMistakes
+                : null,
+          );
+        }).toList(),
+      );
+    }).toList();
+  }
+
+  // Helper method to generate dummy workout sets (KEEP for fallback)
   List<WorkoutSet> _getDummyWorkoutSets() {
     return [
       WorkoutSet(
@@ -503,17 +550,37 @@ class DanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Navigate directly to workout detail screen
+      onTap: () async {
+        // Fetch full workout from Firestore
+        final workoutId = workout['id'] as String;
+        final discoveryService = Get.find<DiscoveryWorkoutService>();
+        
+        // Show loading
+        Get.dialog(
+          Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+        
+        final fullWorkout = await discoveryService.getWorkoutById(workoutId);
+        
+        // Close loading
+        Get.back();
+        
+        if (fullWorkout == null) {
+          Get.snackbar('Error', 'Workout not found');
+          return;
+        }
+        
+        // Navigate to workout detail screen with real data
         WorkoutDetailScreen.navigateTo(
           context,
-          workoutTitle: workout['title'],
-          duration: workout['duration'],
-          calories: workout['calories'],
-          heroImagePath: workout['image'],
-          equipment: workout['equipment'] ?? 'None',
-          focusZones: workout['focusZones'] ?? 'FullBody',
-          workoutSets: _getDummyWorkoutSets(),
+          workoutTitle: fullWorkout.title,
+          duration: fullWorkout.duration,
+          calories: fullWorkout.calories,
+          heroImagePath: fullWorkout.imageUrl,
+          equipment: fullWorkout.equipment,
+          focusZones: fullWorkout.focusZones,
+          workoutSets: _convertToWorkoutSets(fullWorkout.workoutSets),
         );
       },
       child: Container(
@@ -586,7 +653,31 @@ class DanceCard extends StatelessWidget {
     );
   }
 
-  // Helper method to generate dummy workout sets
+  // Convert WorkoutSetModel from Firestore to WorkoutSet for UI
+  List<WorkoutSet> _convertToWorkoutSets(List<WorkoutSetModel> models) {
+    return models.map((setModel) {
+      return WorkoutSet(
+        setName: setModel.setTitle,
+        exercises: setModel.exercises.map((exerciseModel) {
+          return Exercise(
+            name: exerciseModel.exerciseName,
+            duration: exerciseModel.duration ?? 30,
+            thumbnailPath: exerciseModel.thumbnailUrl,
+            actionSteps: exerciseModel.instructions.isNotEmpty 
+                ? exerciseModel.instructions 
+                : null,
+            breathingRhythm: exerciseModel.breathingRhythm,
+            actionFeeling: exerciseModel.actionFeeling,
+            commonMistakes: (exerciseModel.commonMistakes?.isNotEmpty ?? false)
+                ? exerciseModel.commonMistakes
+                : null,
+          );
+        }).toList(),
+      );
+    }).toList();
+  }
+
+  // Helper method to generate dummy workout sets (KEEP for fallback)
   List<WorkoutSet> _getDummyWorkoutSets() {
     return [
       WorkoutSet(

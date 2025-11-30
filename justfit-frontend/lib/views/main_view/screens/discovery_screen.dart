@@ -40,7 +40,7 @@ class DiscoveryScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: WorkoutCategorySection(
                 title: 'Breast Cancer Awareness Month',
-                workouts: DiscoveryData.breastCancerWorkouts,
+                workouts: DiscoveryData.breastCancerMeta,
               ),
             ),
 
@@ -48,7 +48,7 @@ class DiscoveryScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: WorkoutCategorySection(
                 title: 'Knee Friendly Workouts',
-                workouts: DiscoveryData.kneeFriendlyWorkouts,
+                workouts: DiscoveryData.kneeFriendlyMeta,
               ),
             ),
 
@@ -56,7 +56,7 @@ class DiscoveryScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: WorkoutCategorySection(
                 title: 'Bye Bye Belly',
-                workouts: DiscoveryData.byeByeBellyWorkouts,
+                workouts: DiscoveryData.byeByeBellyMeta,
               ),
             ),
 
@@ -64,7 +64,7 @@ class DiscoveryScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: WorkoutCategorySection(
                 title: 'Plus-Size Friendly Workouts',
-                workouts: DiscoveryData.plusSizeWorkouts,
+                workouts: DiscoveryData.plusSizeMeta,
               ),
             ),
 
@@ -73,7 +73,7 @@ class DiscoveryScreen extends StatelessWidget {
               child: WorkoutCategorySection(
                 title: 'For a Healthier You',
                 categoryLabel: 'FOR A HEALTHIER YOU',
-                workouts: DiscoveryData.healthierYouWorkouts,
+                workouts: DiscoveryData.healthierYouMeta,
               ),
             ),
 
@@ -82,7 +82,7 @@ class DiscoveryScreen extends StatelessWidget {
               child: WorkoutCategorySection(
                 title: 'Strengthen and Stretch with Ease',
                 categoryLabel: 'STRENGTHEN AND STRETCH WITH EASE',
-                workouts: DiscoveryData.strengthenStretchWorkouts,
+                workouts: DiscoveryData.strengthenStretchMeta,
               ),
             ),
 
@@ -91,7 +91,7 @@ class DiscoveryScreen extends StatelessWidget {
               child: WorkoutCategorySection(
                 title: 'Easy Exercises You Can Do from Your Seat',
                 categoryLabel: 'EASY EXERCISES YOU CAN DO FROM YOUR SEAT',
-                workouts: DiscoveryData.seatExercisesWorkouts,
+                workouts: DiscoveryData.seatExercisesMeta,
               ),
             ),
 
@@ -100,7 +100,7 @@ class DiscoveryScreen extends StatelessWidget {
               child: WorkoutCategorySection(
                 title: 'Revitalize and Renew, Unleash Your Wellness!',
                 categoryLabel: 'REVITALIZE AND RENEW, UNLEASH YOUR WELLNESS!',
-                workouts: DiscoveryData.revitalizeWorkouts,
+                workouts: DiscoveryData.revitalizeMeta,
               ),
             ),
 
@@ -109,7 +109,7 @@ class DiscoveryScreen extends StatelessWidget {
               child: WorkoutCategorySection(
                 title: 'Release Pressure & Find Your Inner Calm',
                 categoryLabel: 'RELEASE PRESSURE & FIND YOUR INNER CALM',
-                workouts: DiscoveryData.innerCalmWorkouts,
+                workouts: DiscoveryData.innerCalmMeta,
               ),
             ),
 
@@ -125,7 +125,7 @@ class DiscoveryScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: WorkoutCategorySection(
                 title: 'If You Can\'t Lose Weight, Try These',
-                workouts: DiscoveryData.loseWeightWorkouts,
+                workouts: DiscoveryData.loseWeightMeta,
               ),
             ),
 

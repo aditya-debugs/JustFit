@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/discovery_workout_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -13,6 +14,7 @@ Future<void> setupDependencyInjection() async {
     // ====================
 
     getIt.registerLazySingleton<StorageService>(() => StorageService());
+    getIt.registerLazySingleton<DiscoveryWorkoutService>(() => DiscoveryWorkoutService()); // ✅ ADD THIS
 
     // ====================
     // 2. INITIALIZE SERVICES (Order Matters!)

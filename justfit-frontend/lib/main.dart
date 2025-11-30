@@ -9,6 +9,9 @@ import 'core/services/auth_service.dart';
 import 'core/services/user_service.dart';
 import 'controllers/workout_plan_controller.dart'; // ← NEW LINE
 import 'core/services/firestore_service.dart';
+// import 'data/seed/seed_discovery_workouts.dart';  // ✅ CORRECT PATH
+import 'core/services/discovery_workout_service.dart';
+
 
 
 
@@ -21,16 +24,24 @@ void main() async {
   );
   print('✅ Firebase initialized successfully');
 
+  // // 🔥 CLEAR AND RE-SEED (DELETE AFTER USE!)
+  // await SeedDiscoveryWorkouts.clearAll();
+  // await SeedDiscoveryWorkouts.seedAll();
+
+
   // Initialize Services (GetX)
   Get.put(AuthService(), permanent: true);
   Get.put(UserService(), permanent: true);
   Get.put(FirestoreService(), permanent: true);
   Get.put(WorkoutPlanController(), permanent: true); // ← NEW LINE
+  Get.put(DiscoveryWorkoutService(), permanent: true); // ✅ ADD THIS LINE
   
   print('✅ Auth Service initialized');
   print('✅ User Service initialized');
   print('✅ Firestore Service initialized');
   print('✅ Workout Plan Controller initialized'); // ← NEW LINE
+  print('✅ Discovery Workout Service initialized'); // ✅ ADD THIS LINE
+
 
   await setupDependencyInjection();
 
