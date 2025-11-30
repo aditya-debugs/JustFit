@@ -129,7 +129,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F5F5), // ✅ Light grey background like Progress screen
       body: SafeArea(
         child: Obx(() {
           // Loading state
