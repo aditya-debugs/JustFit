@@ -515,21 +515,21 @@ class WorkoutPlanController extends GetxController {
         durationMinutes: durationMinutes,
       );
 
-      // ✅ ALWAYS check workout count achievement (since count always increments)
+      // ✅ ALWAYS check workout count achievement AFTER stats update (prevents reading stale count)
       workoutAchievement = await _checkWorkoutCountAchievement();
 
-      // 2. Only update streak and mark day complete for FULL workouts
-      if (isFullCompletion) {
-        // Update streak and get streak achievement
-        streakAchievement = await updateStreakAfterWorkout(dayNumber);
+      // ✅ ALWAYS update streak (partial or full workouts both count for daily streak)
+      streakAchievement = await updateStreakAfterWorkout(dayNumber);
 
+      // 2. Only mark day complete for FULL workouts
+      if (isFullCompletion) {
         // Mark day as completed in plan
         await markDayAsCompleted(dayNumber);
 
-        print('✅ Full workout completion processed');
+        print('✅ Full workout completion processed (day marked complete)');
       } else {
         print(
-            '⚠️ Partial workout - streak not updated, day not marked complete');
+            '⚠️ Partial workout - streak updated, but day NOT marked complete');
       }
 
       print('✅ Workout completion saved successfully');
@@ -797,12 +797,12 @@ class WorkoutPlanController extends GetxController {
   /// ✅ Check for workout count achievements
   Future<AchievementModel?> _checkWorkoutCountAchievement() async {
     try {
-      // Get total BEFORE current save
+      // Get total AFTER stats update (current count already includes this workout)
       final total = await getTotalWorkoutsCompleted();
 
-      // Check if THIS workout triggers an achievement
-      final nextTotal = total + 1; // The count AFTER this workout
-      print('🏋️ Total workouts completed: $total → $nextTotal (after this)');
+      // Check if THIS workout count triggers an achievement
+      print('🏋️ Total workouts completed (after update): $total');
+      final nextTotal = total; // The count is already updated
 
       final achievement = AchievementModel.getByWorkoutCount(nextTotal);
 

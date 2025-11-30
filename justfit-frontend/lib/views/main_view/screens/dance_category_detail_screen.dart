@@ -200,7 +200,7 @@ class DanceCategoryDetailScreen extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: const Color(0xFFFF1744),
+                            color: const Color(0xFFE91E63),
                           ),
                         ),
                       ],

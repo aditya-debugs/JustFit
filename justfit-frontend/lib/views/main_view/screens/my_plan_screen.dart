@@ -213,7 +213,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const CircularProgressIndicator(
-            color: Color(0xFFFF1744),
+            color: Color(0xFFE91E63),
           ),
           const SizedBox(height: 24),
           Text(
@@ -267,7 +267,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF1744),
+                backgroundColor: const Color(0xFFE91E63),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -325,7 +325,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF1744),
+                backgroundColor: const Color(0xFFE91E63),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -349,7 +349,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
       children: [
         RefreshIndicator(
           onRefresh: () => _controller.refreshPlan(),
-          color: const Color(0xFFFF1744),
+          color: const Color(0xFFE91E63),
           child: CustomScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
@@ -512,7 +512,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
                     widthFactor: phaseProgress / 100,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF1744),
+                        color: const Color(0xFFE91E63),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -981,11 +981,11 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF1744),
+        color: const Color(0xFFE91E63),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF1744).withOpacity(0.3),
+            color: const Color(0xFFE91E63).withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1125,7 +1125,7 @@ class DottedLinePainter extends CustomPainter {
 //       radius: 1.1,
 //       colors: [
 //         const Color(0xFFFF4444),
-//         const Color(0xFFFF1744),
+//         const Color(0xFFE91E63),
 //         const Color(0xFFE91E63),
 //         const Color(0xFFD81B60),
 //       ],
@@ -1181,7 +1181,7 @@ class DottedLinePainter extends CustomPainter {
 //       colors: [
 //         const Color(0xFFFFFFFF).withOpacity(0.35),
 //         const Color(0xFFFF6B6B).withOpacity(0.25),
-//         const Color(0xFFFF1744).withOpacity(0.0),
+//         const Color(0xFFE91E63).withOpacity(0.0),
 //       ],
 //       stops: const [0.0, 0.5, 1.0],
 //     );

@@ -5,6 +5,7 @@ import '../../../controllers/workout_plan_controller.dart';
 import '../../../data/models/achievement_model.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 import '../../../core/services/firestore_service.dart';
 import '../../../core/services/user_service.dart';
 import '../widgets/settings_drawer.dart';
@@ -633,71 +634,37 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget _buildAchievementBadge(AchievementModel achievement,
       {bool isLast = false}) {
     return Container(
-      width: 120, // ✅ Reduced width to fit more badges
-      margin: EdgeInsets.only(
-          right: isLast ? 0 : 12), // ✅ Less spacing, no margin on last
+      width: 120,
+      margin: EdgeInsets.only(right: isLast ? 0 : 12),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // ✅ Prevent overflow
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Badge with gradient background
+          // ✅ Use the exact same badge design as achievement screen
           Container(
-            width: 90, // ✅ Reduced size
-            height: 90, // ✅ Reduced size
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  achievement.badgeStyle.primaryColor,
-                  achievement.badgeStyle.accentColor,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            width: 90,
+            height: 90,
+            child: CustomPaint(
+              painter: _ColorfulBadgePainter(
+                number: achievement.badgeNumber,
+                primaryColor: achievement.badgeStyle.primaryColor,
+                accentColor: achievement.badgeStyle.accentColor,
               ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: achievement.badgeStyle.primaryColor.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // Stripes pattern
-                CustomPaint(
-                  painter: _StripePainter(),
-                  size: const Size(100, 100),
-                ),
-                // Badge number
-                Center(
-                  child: Text(
-                    achievement.badgeNumber.toString(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 36, // ✅ Slightly smaller
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
-          const SizedBox(height: 8), // ✅ Reduced spacing
+          const SizedBox(height: 8),
           Flexible(
-            // ✅ Added Flexible to prevent overflow
             child: Text(
               achievement.title,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                fontSize: 13, // ✅ Slightly smaller
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
               ),
             ),
           ),
-          // Date
           Text(
             DateFormat('MM.dd.yyyy').format(DateTime.now()),
             style: GoogleFonts.poppins(
@@ -1452,26 +1419,146 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
 // ========== CUSTOM PAINTERS ==========
 
-class _StripePainter extends CustomPainter {
+// ✅ ColorfulBadgePainter - Same as achievement screen for consistent badge design
+class _ColorfulBadgePainter extends CustomPainter {
+  final int number;
+  final Color primaryColor;
+  final Color accentColor;
+
+  _ColorfulBadgePainter({
+    required this.number,
+    required this.primaryColor,
+    required this.accentColor,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
 
-    for (int i = 0; i < 10; i++) {
-      final x = (size.width / 10) * i;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
+    // Create wave pattern
+    final wavePath = Path();
+    final waveCount = 8;
+    final angleStep = (2 * math.pi) / waveCount;
+
+    for (int i = 0; i < waveCount; i++) {
+      final angle = i * angleStep;
+      final nextAngle = (i + 1) * angleStep;
+
+      final outerRadius = radius * 0.95;
+      final outerX = center.dx + math.cos(angle) * outerRadius;
+      final outerY = center.dy + math.sin(angle) * outerRadius;
+
+      final innerRadius = radius * 0.75;
+      final innerAngle = angle + angleStep / 2;
+      final innerX = center.dx + math.cos(innerAngle) * innerRadius;
+      final innerY = center.dy + math.sin(innerAngle) * innerRadius;
+
+      if (i == 0) wavePath.moveTo(outerX, outerY);
+
+      wavePath.quadraticBezierTo(
+        innerX,
+        innerY,
+        center.dx + math.cos(nextAngle) * outerRadius,
+        center.dy + math.sin(nextAngle) * outerRadius,
       );
+
+      // Draw colored petals
+      if (i % 2 == 0) {
+        final petalPaint = Paint()
+          ..color = primaryColor
+          ..style = PaintingStyle.fill;
+
+        final petalPath = Path()
+          ..moveTo(center.dx, center.dy)
+          ..lineTo(outerX, outerY)
+          ..quadraticBezierTo(
+            innerX,
+            innerY,
+            center.dx + math.cos(nextAngle) * outerRadius,
+            center.dy + math.sin(nextAngle) * outerRadius,
+          )
+          ..close();
+
+        canvas.drawPath(petalPath, petalPaint);
+      }
     }
+
+    wavePath.close();
+
+    // Border
+    final borderPaint = Paint()
+      ..color = const Color(0xFF8E8E93)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(wavePath, borderPaint);
+
+    // Inner circle
+    final circlePaint = Paint()
+      ..color = const Color(0xFFF5F5F5)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius * 0.65, circlePaint);
+
+    // Inner border
+    final innerBorderPaint = Paint()
+      ..color = const Color(0xFFD1D1D6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(center, radius * 0.65, innerBorderPaint);
+
+    // Badge number
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: number.toString(),
+        style: TextStyle(
+          fontSize: size.width * 0.35,
+          fontWeight: FontWeight.w300,
+          color: const Color(0xFFBDBDBD),
+          fontFamily: 'Poppins',
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2 - size.height * 0.08,
+      ),
+    );
+
+    // "WORKOUT" text
+    final workoutTextPainter = TextPainter(
+      text: TextSpan(
+        text: 'WORKOUT',
+        style: TextStyle(
+          fontSize: size.width * 0.08,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFFC0C0C0),
+          letterSpacing: 2,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    workoutTextPainter.layout();
+    workoutTextPainter.paint(
+      canvas,
+      Offset(
+        center.dx - workoutTextPainter.width / 2,
+        center.dy + size.height * 0.05,
+      ),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_ColorfulBadgePainter oldDelegate) => false;
 }
 
 class _WeightGraphPainter extends CustomPainter {

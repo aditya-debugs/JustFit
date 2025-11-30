@@ -120,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 height: 42,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFE91E63), Color(0xFFFF1744)],
+                    colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -206,7 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
               gradient: LinearGradient(
                 colors: [
                   const Color(0xFFE91E63).withOpacity(0.1),
-                  const Color(0xFFFF1744).withOpacity(0.1),
+                  const Color(0xFFE91E63).withOpacity(0.1),
                 ],
               ),
               shape: BoxShape.circle,
@@ -263,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
               height: 32,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFE91E63), Color(0xFFFF1744)],
+                  colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -281,7 +281,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 gradient: isUser
                     ? const LinearGradient(
-                        colors: [Color(0xFFE91E63), Color(0xFFFF1744)],
+                        colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -352,7 +352,7 @@ class _ChatScreenState extends State<ChatScreen> {
             height: 32,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFE91E63), Color(0xFFFF1744)],
+                colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -516,7 +516,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   gradient: LinearGradient(
                     colors: isTyping
                         ? [Colors.grey[400]!, Colors.grey[400]!]
-                        : [const Color(0xFFE91E63), const Color(0xFFFF1744)],
+                        : [const Color(0xFFE91E63), const Color(0xFFE91E63)],
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [

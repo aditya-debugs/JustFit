@@ -510,7 +510,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFFFF1744), // ✅ Always red, even when locked
+            color: const Color(0xFFE91E63), // ✅ Always red, even when locked
             borderRadius: BorderRadius.circular(12),
           ),
           child: Material(
@@ -1034,7 +1034,7 @@ class ExerciseDetailSheet {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF1744),
+                        color: const Color(0xFFE91E63),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Material(

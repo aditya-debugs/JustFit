@@ -580,7 +580,7 @@ class StarPainter extends CustomPainter {
 //       radius: 1.1,
 //       colors: [
 //         const Color(0xFFFF4444), // Bright red center
-//         const Color(0xFFFF1744), // Primary red
+//         const Color(0xFFE91E63), // Primary red
 //         const Color(0xFFE91E63), // Pink
 //         const Color(0xFFD81B60), // Darker pink edge
 //       ],
@@ -635,7 +635,7 @@ class StarPainter extends CustomPainter {
 //       radius: 0.8,
 //       colors: [
 //         const Color(0xFFFF5252).withOpacity(0.9), // Bright highlight
-//         const Color(0xFFFF1744).withOpacity(0.6), // Fade to transparent
+//         const Color(0xFFE91E63).withOpacity(0.6), // Fade to transparent
 //       ],
 //     );
 
@@ -688,7 +688,7 @@ class StarPainter extends CustomPainter {
 //       colors: [
 //         const Color(0xFFFFFFFF).withOpacity(0.4), // White hot center
 //         const Color(0xFFFF6B6B).withOpacity(0.3), // Light red
-//         const Color(0xFFFF1744).withOpacity(0.0), // Fade to transparent
+//         const Color(0xFFE91E63).withOpacity(0.0), // Fade to transparent
 //       ],
 //       stops: const [0.0, 0.5, 1.0],
 //     );
@@ -701,7 +701,7 @@ class StarPainter extends CustomPainter {
 
 //     // ===== SUBTLE GLOW EFFECT =====
 //     paint.shader = null;
-//     paint.color = const Color(0xFFFF1744).withOpacity(0.1);
+//     paint.color = const Color(0xFFE91E63).withOpacity(0.1);
 //     paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     
 //     canvas.drawPath(outerPath, paint);

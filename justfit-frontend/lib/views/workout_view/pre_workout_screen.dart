@@ -70,10 +70,10 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
           builder: (context, constraints) {
             // Calculate available space
             final availableHeight = constraints.maxHeight;
-            
+
             // Dynamically adjust phone mockup size
             final mockupHeight = (availableHeight * 0.40).clamp(240.0, 360.0);
-            
+
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -84,7 +84,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFFF1744),
+                      color: const Color(0xFFE91E63),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -98,21 +98,21 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                       height: 1.3,
                     ),
                   ),
-                  
+
                   const Spacer(flex: 2),
 
                   _buildIntensityIndicator(),
-                  
+
                   const Spacer(flex: 1),
-                  
+
                   // Responsive phone mockup - Shrinks on small screens
                   SizedBox(
                     height: mockupHeight,
                     child: _buildPhoneMockup(),
                   ),
-                  
+
                   const Spacer(flex: 2),
-                  
+
                   // Bottom text - Fixed
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -126,11 +126,11 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   _buildActionButtons(),
-                  
+
                   const SizedBox(height: 8),
                 ],
               ),
@@ -141,7 +141,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
     );
   }
 
-    Widget _buildIntensityIndicator() {
+  Widget _buildIntensityIndicator() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -168,7 +168,6 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
       ),
     );
   }
-
 
   Widget _buildPhoneMockup() {
     return Container(
@@ -199,7 +198,8 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                     ),
                     Row(
                       children: [
-                        Icon(Icons.signal_cellular_4_bar, size: 14, color: Colors.black),
+                        Icon(Icons.signal_cellular_4_bar,
+                            size: 14, color: Colors.black),
                         const SizedBox(width: 4),
                         Icon(Icons.wifi, size: 14, color: Colors.black),
                         const SizedBox(width: 4),
@@ -209,9 +209,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                   ],
                 ),
               ),
-              
               const Spacer(),
-              
               AnimatedBuilder(
                 animation: _pulseController,
                 builder: (context, child) {
@@ -224,9 +222,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                   );
                 },
               ),
-              
               const SizedBox(height: 16),
-              
               Text(
                 'Please hold the camera until the end',
                 style: GoogleFonts.poppins(
@@ -234,7 +230,6 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                   color: Colors.grey[600],
                 ),
               ),
-              
               const Spacer(),
             ],
           ),
@@ -252,7 +247,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
           child: ElevatedButton(
             onPressed: _isLoading ? null : _navigateToHeartRateMeasure,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF1744),
+              backgroundColor: const Color(0xFFE91E63),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -268,9 +263,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
             ),
           ),
         ),
-        
         const SizedBox(height: 12),
-        
         SizedBox(
           width: double.infinity,
           height: 56,
@@ -278,7 +271,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
             onPressed: _isLoading ? null : _startTrainingDirectly,
             style: TextButton.styleFrom(
               backgroundColor: Colors.grey[100],
-              foregroundColor: const Color(0xFFFF1744),
+              foregroundColor: const Color(0xFFE91E63),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -289,7 +282,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
                     width: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      color: Color(0xFFFF1744),
+                      color: Color(0xFFE91E63),
                     ),
                   )
                 : Text(
@@ -326,22 +319,22 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
 
   Future<void> _startTrainingDirectly() async {
     setState(() => _isLoading = true);
-    
+
     await Future.delayed(const Duration(milliseconds: 1500));
-    
+
     if (!mounted) return;
-    
+
     setState(() => _isLoading = false);
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-          builder: (context) => ActiveWorkoutScreen(
+        builder: (context) => ActiveWorkoutScreen(
           dayNumber: widget.dayNumber,
           exercises: widget.exercises,
           initialHeartRate: null,
-          estimatedCalories: widget.calories,  // ✅ ADD THIS
-          estimatedDuration: widget.duration,  // ✅ ADD THIS
+          estimatedCalories: widget.calories, // ✅ ADD THIS
+          estimatedDuration: widget.duration, // ✅ ADD THIS
           discoveryWorkoutId: widget.discoveryWorkoutId, // ✅ ADD
           discoveryWorkoutTitle: widget.discoveryWorkoutTitle, // ✅ ADD
           discoveryCategory: widget.discoveryCategory, // ✅ ADD

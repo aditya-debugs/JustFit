@@ -151,7 +151,7 @@ class WorkoutCategorySection extends StatelessWidget {
                 //     style: GoogleFonts.poppins(
                 //       fontSize: 11,
                 //       fontWeight: FontWeight.w700,
-                //       color: const Color(0xFFFF1744),
+                //       color: const Color(0xFFE91E63),
                 //       letterSpacing: 0.5,
                 //     ),
                 //   ),
@@ -287,7 +287,7 @@ class WorkoutCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: workout['isVip'] == true
                           ? Colors.black.withOpacity(0.7)
-                          : const Color(0xFFFF1744).withOpacity(0.9),
+                          : const Color(0xFFE91E63).withOpacity(0.9),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

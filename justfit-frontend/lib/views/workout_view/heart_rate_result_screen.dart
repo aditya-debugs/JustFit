@@ -108,12 +108,10 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFFFF1744),
+                  color: const Color(0xFFE91E63),
                 ),
               ),
-              
               const SizedBox(height: 8),
-              
               Text(
                 _getZoneTitle(),
                 textAlign: TextAlign.center,
@@ -124,9 +122,7 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
                   height: 1.2,
                 ),
               ),
-              
               const SizedBox(height: 40),
-              
               ScaleTransition(
                 scale: CurvedAnimation(
                   parent: _scaleController,
@@ -138,9 +134,7 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
                   size: 220,
                 ),
               ),
-              
               const Spacer(),
-              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
@@ -153,16 +147,14 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
                   ),
                 ),
               ),
-              
               const SizedBox(height: 40),
-              
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _startTraining,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF1744),
+                    backgroundColor: const Color(0xFFE91E63),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -187,7 +179,6 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
                         ),
                 ),
               ),
-              
               const SizedBox(height: 16),
             ],
           ),
@@ -198,11 +189,11 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
 
   Future<void> _startTraining() async {
     setState(() => _isLoading = true);
-    
+
     await Future.delayed(const Duration(milliseconds: 1200));
-    
+
     if (!mounted) return;
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -210,8 +201,8 @@ class _HeartRateResultScreenState extends State<HeartRateResultScreen>
           dayNumber: widget.dayNumber,
           exercises: widget.exercises,
           initialHeartRate: widget.heartRate,
-          estimatedCalories: widget.calories,  // ✅ ADD THIS
-          estimatedDuration: widget.duration,  // ✅ ADD THIS
+          estimatedCalories: widget.calories, // ✅ ADD THIS
+          estimatedDuration: widget.duration, // ✅ ADD THIS
           discoveryWorkoutId: widget.discoveryWorkoutId, // ✅ ADD
           discoveryWorkoutTitle: widget.discoveryWorkoutTitle, // ✅ ADD
           discoveryCategory: widget.discoveryCategory, // ✅ ADD

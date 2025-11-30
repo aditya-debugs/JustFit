@@ -524,11 +524,11 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
               onContinue: () {
                 // After workout achievement
                 if (widget.isPartialWorkout) {
-                  // Partial workout - skip streak screen, go to activity
+                  // Partial workout - go directly to activity tab
                   print(
-                      '⚠️ Partial workout - skipping streak screen after achievement');
-                  // Use pushAndRemoveUntil to clear entire stack
-                  Navigator.of(context).pushAndRemoveUntil(
+                      '⚠️ Partial workout after achievement - navigating to Activity');
+                  // Pop the achievement screen first, then navigate
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (context) => const MainScreen(initialIndex: 2),
                     ),

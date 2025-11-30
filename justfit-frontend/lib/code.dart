@@ -522,7 +522,7 @@
 //         child: Container(
 //           width: double.infinity,
 //           decoration: BoxDecoration(
-//             color: const Color(0xFFFF1744),
+//             color: const Color(0xFFE91E63),
 //             borderRadius: BorderRadius.circular(12),
 //           ),
 //           child: Material(
@@ -737,7 +737,7 @@
 //                     child: Container(
 //                       width: double.infinity,
 //                       decoration: BoxDecoration(
-//                         color: const Color(0xFFFF1744),
+//                         color: const Color(0xFFE91E63),
 //                         borderRadius: BorderRadius.circular(12),
 //                       ),
 //                       child: Material(

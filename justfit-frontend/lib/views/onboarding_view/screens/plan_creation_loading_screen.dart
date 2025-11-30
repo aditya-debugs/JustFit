@@ -55,7 +55,7 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       duration: const Duration(seconds: 30), // Slow fake progress
     );
 
-    _progressAnimation = Tween<double>(begin: 0.0, end: 0.85).animate(
+    _progressAnimation = Tween<double>(begin: 0.0, end: 0.93).animate(
       CurvedAnimation(parent: _progressController, curve: Curves.easeOut),
     );
 
@@ -109,18 +109,23 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
 
   void _completePlanLoading() {
     if (!_planReady && mounted) {
-      setState(() {
-        _planReady = true;
-      });
-
-      // Animate to 100% completion
+      // First, complete progress to 100% (93 → 100)
       _progressController.animateTo(
         1.0,
-        duration: const Duration(milliseconds: 800),
+        duration: const Duration(milliseconds: 700),
         curve: Curves.easeInOut,
       );
 
-      // Wait for animation to complete, then navigate
+      // After reaching 100%, turn green
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) {
+          setState(() {
+            _planReady = true; // This triggers green color
+          });
+        }
+      });
+
+      // Wait for green animation, then navigate
       Future.delayed(const Duration(milliseconds: 1200), () async {
         if (mounted) {
           _pollTimer?.cancel();
@@ -321,72 +326,44 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
 
     return Stack(
       children: [
-        // Row 1 (Top) - 3 circles
+        // Left circle
         _buildFloatingCircle(
           left: screenWidth * 0.05,
-          bottom: 200,
-          size: 60,
-          color: Colors.pink[100]!,
-        ),
-        _buildFloatingCircle(
-          left: screenWidth * 0.35,
-          bottom: 210,
-          size: 55,
-          color: Colors.yellow[100]!,
-        ),
-        _buildFloatingCircle(
-          right: screenWidth * 0.05,
-          bottom: 195,
-          size: 65,
-          color: Colors.blue[100]!,
-        ),
-
-        // Row 2 (Middle-Top) - 2 circles
-        _buildFloatingCircle(
-          left: screenWidth * 0.02,
-          bottom: 115,
-          size: 70,
-          color: Colors.orange[100]!,
-        ),
-        _buildFloatingCircle(
-          right: screenWidth * 0.15,
-          bottom: 125,
-          size: 100,
-          color: Colors.pink[50]!,
-        ),
-
-        // Row 3 (Middle) - 3 circles including center large
-        _buildFloatingCircle(
-          left: screenWidth * 0.08,
-          bottom: 35,
-          size: 85,
+          bottom: 80,
+          size: 90,
           color: Colors.purple[100]!,
         ),
+
+        // Right circle
+        _buildFloatingCircle(
+          right: screenWidth * 0.05,
+          bottom: 70,
+          size: 110,
+          color: Colors.pink[100]!,
+        ),
+
+        // Center large circle
         _buildFloatingCircle(
           left: screenWidth * 0.5 - 110,
           bottom: 25,
           size: 220,
           color: Colors.grey[300]!,
         ),
+
+        // Bottom left circle
         _buildFloatingCircle(
-          right: screenWidth * 0.02,
-          bottom: 40,
-          size: 110,
-          color: Colors.green[100]!,
+          left: screenWidth * 0.20,
+          bottom: 5,
+          size: 85,
+          color: Colors.blue[100]!,
         ),
 
-        // Row 4 (Bottom) - 2 circles
+        // Bottom right circle
         _buildFloatingCircle(
-          left: screenWidth * 0.25,
-          bottom: 5,
-          size: 75,
-          color: Colors.cyan[100]!,
-        ),
-        _buildFloatingCircle(
-          right: screenWidth * 0.25,
+          right: screenWidth * 0.20,
           bottom: 0,
-          size: 80,
-          color: Colors.amber[100]!,
+          size: 90,
+          color: Colors.orange[100]!,
         ),
       ],
     );

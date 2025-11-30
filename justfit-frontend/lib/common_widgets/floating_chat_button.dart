@@ -122,7 +122,7 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
                 height: _isDragging ? 65 : 60,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFE91E63), Color(0xFFFF1744)],
+                    colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

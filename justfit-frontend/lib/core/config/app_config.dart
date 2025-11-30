@@ -2,7 +2,8 @@
 /// Toggle testing mode for quick workout testing
 class AppConfig {
   // ✅ SET TO TRUE FOR TESTING, FALSE FOR PRODUCTION
-  static const bool isTestingMode = true; // ← CHANGE THIS ONLY
+  // static const bool isTestingMode = true; // ← COMMENTED OUT FOR PRODUCTION
+  static const bool isTestingMode = false; // ← PRODUCTION MODE
 
   // Backend URL Configuration
   static const String backendUrl =

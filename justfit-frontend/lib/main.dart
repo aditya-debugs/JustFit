@@ -406,7 +406,7 @@ class MyApp extends StatelessWidget {
 //                       padding: const EdgeInsets.symmetric(vertical: 16),
 //                       shape: RoundedRectangleBorder(
 //                         borderRadius: BorderRadius.circular(12),
-//                         side: const BorderSide(color: Color(0xFFFF1744)),
+//                         side: const BorderSide(color: Color(0xFFE91E63)),
 //                       ),
 //                     ),
 //                     child: Text(
@@ -414,7 +414,7 @@ class MyApp extends StatelessWidget {
 //                       style: GoogleFonts.poppins(
 //                         fontSize: 16,
 //                         fontWeight: FontWeight.w600,
-//                         color: const Color(0xFFFF1744),
+//                         color: const Color(0xFFE91E63),
 //                       ),
 //                     ),
 //                   ),
@@ -427,7 +427,7 @@ class MyApp extends StatelessWidget {
 //                       _showQuitConfirmation();
 //                     },
 //                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: const Color(0xFFFF1744),
+//                       backgroundColor: const Color(0xFFE91E63),
 //                       padding: const EdgeInsets.symmetric(vertical: 16),
 //                       shape: RoundedRectangleBorder(
 //                         borderRadius: BorderRadius.circular(12),
@@ -611,7 +611,7 @@ class MyApp extends StatelessWidget {
 //               value: progress,
 //               minHeight: 8,
 //               backgroundColor: Colors.grey[800],
-//               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF1744)),
+//               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE91E63)),
 //             ),
 //           ),
 //           const SizedBox(height: 8),
@@ -658,7 +658,7 @@ class MyApp extends StatelessWidget {
 //             style: GoogleFonts.poppins(
 //               fontSize: 24,
 //               fontWeight: FontWeight.w700,
-//               color: const Color(0xFFFF1744),
+//               color: const Color(0xFFE91E63),
 //             ),
 //           ),
 //           const SizedBox(height: 16),
@@ -741,7 +741,7 @@ class MyApp extends StatelessWidget {
 //             'Set $_currentSet/$_totalSets • ${exercise.reps ?? 12} reps',
 //             style: GoogleFonts.poppins(
 //               fontSize: 18,
-//               color: const Color(0xFFFF1744),
+//               color: const Color(0xFFE91E63),
 //               fontWeight: FontWeight.w600,
 //             ),
 //           ),
@@ -783,7 +783,7 @@ class MyApp extends StatelessWidget {
 //             strokeWidth: 12,
 //             backgroundColor: Colors.grey[800],
 //             valueColor: AlwaysStoppedAnimation<Color>(
-//               _isRestPhase ? const Color(0xFF4CAF50) : const Color(0xFFFF1744),
+//               _isRestPhase ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
 //             ),
 //           ),
 //         ),
@@ -863,7 +863,7 @@ class MyApp extends StatelessWidget {
 //             color: onPressed == null
 //                 ? Colors.grey[800]
 //                 : isPrimary
-//                     ? const Color(0xFFFF1744)
+//                     ? const Color(0xFFE91E63)
 //                     : Colors.grey[900],
 //             shape: BoxShape.circle,
 //           ),

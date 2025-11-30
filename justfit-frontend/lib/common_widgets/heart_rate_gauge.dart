@@ -45,7 +45,7 @@ class HeartRateGauge extends StatelessWidget {
                   // Heart icon
                   Icon(
                     Icons.favorite,
-                    color: const Color(0xFFFF1744),
+                    color: const Color(0xFFE91E63),
                     size: size * 0.15,
                   ),
                   SizedBox(height: size * 0.02),
@@ -91,7 +91,7 @@ class HeartRateGauge extends StatelessWidget {
       children: [
         _ZoneDot(color: const Color(0xFF64B5F6), label: 'Resting'),
         _ZoneDot(color: const Color(0xFFBA68C8), label: 'Warm Up'),
-        _ZoneDot(color: const Color(0xFFFF1744), label: 'Fat Burning'),
+        _ZoneDot(color: const Color(0xFFE91E63), label: 'Fat Burning'),
         _ZoneDot(color: const Color(0xFFFFB300), label: 'Anaerobic'),
       ],
     );
@@ -166,7 +166,7 @@ class _GaugePainter extends CustomPainter {
       final colors = [
         const Color(0xFF64B5F6), // Blue - Resting (0-99)
         const Color(0xFFBA68C8), // Purple - Warm Up (100-119)
-        const Color(0xFFFF1744), // Red - Fat Burning (120-139)
+        const Color(0xFFE91E63), // Red - Fat Burning (120-139)
         const Color(0xFFFFB300), // Orange - Anaerobic (140-180)
       ];
       
@@ -218,7 +218,7 @@ class _GaugePainter extends CustomPainter {
       final progressSweep = sweepAngle * progress;
       
       final progressPaint = Paint()
-        ..color = const Color(0xFFFF1744)
+        ..color = const Color(0xFFE91E63)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round;
@@ -233,7 +233,7 @@ class _GaugePainter extends CustomPainter {
     
     if (bpm < 100) return const Color(0xFF64B5F6);      // Blue - Resting
     if (bpm < 120) return const Color(0xFFBA68C8);      // Purple - Warm Up
-    if (bpm < 140) return const Color(0xFFFF1744);      // Red - Fat Burning
+    if (bpm < 140) return const Color(0xFFE91E63);      // Red - Fat Burning
     return const Color(0xFFFFB300);                     // Orange - Anaerobic
   }
 

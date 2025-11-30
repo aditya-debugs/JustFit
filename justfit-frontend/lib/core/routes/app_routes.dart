@@ -44,15 +44,14 @@ import '../../views/splash_view/splash_screen.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/user_service.dart';
 
-
-
 class AppRoutes {
   static const String splash = '/';
 
   // 🔧 DEVELOPMENT FLAG - Toggle onboarding
   // Set to true to skip onboarding and go directly to MainScreen
   // Set to false for production or to test onboarding flow
-  static const bool skipOnboarding = false;
+  // static const bool skipOnboarding = true; // ← COMMENTED OUT FOR PRODUCTION
+  static const bool skipOnboarding = false; // ← PRODUCTION MODE
 
   static List<GetPage> routes = [
     // ✅ UPDATED: Simplified splash route
@@ -64,13 +63,13 @@ class AppRoutes {
           Get.put(OnboardingController(), permanent: true);
           print('✅ OnboardingController initialized at app start');
         }
-        
+
         // 🔧 Development flag check
         if (skipOnboarding) {
           print('🚀 Development Mode: Skipping to MainScreen');
           return const MainScreen();
         }
-        
+
         // Return splash screen - it will handle all navigation logic
         return const SplashScreen();
       },
@@ -79,14 +78,15 @@ class AppRoutes {
 
   // Extract onboarding flow to reduce nesting
   // ✅ Made public so it can be called from profile_photo_screen
-static void startOnboardingFlow() {
+  static void startOnboardingFlow() {
     // Controller is already initialized, just start the flow
     Get.off(
       () => OnboardingQuestionScreen(
         partTitle: OnboardingData.goalQ1['partTitle'],
         question: OnboardingData.goalQ1['question'],
         options: OnboardingData.goalQ1['options'],
-        isMultiSelect: OnboardingData.goalQ1['isMultiSelect'] ?? false, // ✅ ADD THIS LINE
+        isMultiSelect:
+            OnboardingData.goalQ1['isMultiSelect'] ?? false, // ✅ ADD THIS LINE
         currentPart: OnboardingData.goalQ1['currentPart'],
         currentQuestionInPart: OnboardingData.goalQ1['currentQuestionInPart'],
         totalQuestionsInPart: OnboardingData.goalQ1['totalQuestionsInPart'],
@@ -147,7 +147,8 @@ static void startOnboardingFlow() {
         partTitle: OnboardingData.bodyDataQ1['partTitle'],
         question: OnboardingData.bodyDataQ1['question'],
         currentPart: OnboardingData.bodyDataQ1['currentPart'],
-        currentQuestionInPart: OnboardingData.bodyDataQ1['currentQuestionInPart'],
+        currentQuestionInPart:
+            OnboardingData.bodyDataQ1['currentQuestionInPart'],
         totalQuestionsInPart: OnboardingData.bodyDataQ1['totalQuestionsInPart'],
         totalParts: OnboardingData.bodyDataQ1['totalParts'],
         onBack: () => Get.back(),
@@ -160,13 +161,14 @@ static void startOnboardingFlow() {
   static void _navigateToWeight() {
     // ✅ Get height from controller
     final controller = Get.find<OnboardingController>();
-    
+
     Get.to(
       () => WeightSelectionScreen(
         partTitle: OnboardingData.bodyDataQ2['partTitle'],
         question: OnboardingData.bodyDataQ2['question'],
         currentPart: OnboardingData.bodyDataQ2['currentPart'],
-        currentQuestionInPart: OnboardingData.bodyDataQ2['currentQuestionInPart'],
+        currentQuestionInPart:
+            OnboardingData.bodyDataQ2['currentQuestionInPart'],
         totalQuestionsInPart: OnboardingData.bodyDataQ2['totalQuestionsInPart'],
         totalParts: OnboardingData.bodyDataQ2['totalParts'],
         userHeightCm: controller.height.value,
@@ -180,13 +182,14 @@ static void startOnboardingFlow() {
   static void _navigateToGoalWeight() {
     // ✅ Get weight from controller
     final controller = Get.find<OnboardingController>();
-    
+
     Get.to(
       () => GoalWeightSelectionScreen(
         partTitle: OnboardingData.bodyDataQ3['partTitle'],
         question: OnboardingData.bodyDataQ3['question'],
         currentPart: OnboardingData.bodyDataQ3['currentPart'],
-        currentQuestionInPart: OnboardingData.bodyDataQ3['currentQuestionInPart'],
+        currentQuestionInPart:
+            OnboardingData.bodyDataQ3['currentQuestionInPart'],
         totalQuestionsInPart: OnboardingData.bodyDataQ3['totalQuestionsInPart'],
         totalParts: OnboardingData.bodyDataQ3['totalParts'],
         userCurrentWeightKg: controller.weight.value,
@@ -208,7 +211,8 @@ static void startOnboardingFlow() {
         totalQuestionsInPart: 5,
         totalParts: 4,
         onBack: () => Get.back(),
-        onNext: (selectedBodyFatIndex) => _navigateToDesiredBodyType(selectedBodyFatIndex),
+        onNext: (selectedBodyFatIndex) =>
+            _navigateToDesiredBodyType(selectedBodyFatIndex),
       ),
       transition: Transition.noTransition,
     );
@@ -607,7 +611,7 @@ static void startOnboardingFlow() {
         currentPart: 4,
         currentQuestionInPart: 13,
         totalQuestionsInPart: 13,
-            totalParts: 4,
+        totalParts: 4,
         onBack: () => Get.back(),
         onNext: () => _navigateToMotivation1(),
       ),
@@ -651,10 +655,10 @@ static void startOnboardingFlow() {
   static void _navigateToLoadingScreen(bool answer) async {
     print('Motivation 3 answered: ${answer ? "Yes" : "No"}');
     print('🚀 Starting plan generation BEFORE loading screen...');
-    
+
     // ✅ CRITICAL: Start plan generation immediately
     final controller = Get.find<OnboardingController>();
-    
+
     // Navigate to loading screen
     Get.to(
       () => PlanCreationLoadingScreen(
@@ -662,7 +666,7 @@ static void startOnboardingFlow() {
       ),
       transition: Transition.fade,
     );
-    
+
     // ✅ IMMEDIATELY trigger plan generation in background
     controller.submitOnboarding().then((success) {
       if (success) {
@@ -676,7 +680,7 @@ static void startOnboardingFlow() {
 
   static void _navigateToMainApp() {
     print('✅ Plan creation complete! Moving to main app...');
-    
+
     // Plan is already generated and saved, just navigate
     Get.offAll(
       () => const MainScreen(),
