@@ -23,12 +23,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
   final UserService _userService = Get.find<UserService>();
   
   // Weight tracking
-  double currentWeight = 82.9;
-  double? goalWeight = 75.0;
-  List<WeightEntry> weightHistory = [
-    WeightEntry(date: DateTime(2025, 11, 23), weight: 83.5),
-    WeightEntry(date: DateTime(2025, 11, 24), weight: 82.9),
-  ];
+  double currentWeight = 0.0;
+  double? goalWeight;
+  List<WeightEntry> weightHistory = [];
   DateTime _selectedWeightMonth = DateTime.now();
   
   // Duration tracking (independent)
@@ -42,6 +39,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
   // Monthly workout days
   Set<int> completedDays = {};
   DateTime _selectedCalendarMonth = DateTime.now();
+  // Profile stats
+  int totalWorkoutsCompleted = 0;
+  int totalMinutesExercised = 0;
+  int totalCaloriesBurned = 0;
+  double? initialWeight; // ✅ ADD THIS
 
   @override
   void initState() {
@@ -52,6 +54,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Future<void> _loadProgressData() async {
     final user = _userService.currentUser.value;
     if (user == null) return;
+
+    await _loadProfileStats(); // ✅ ADD THIS LINE
 
     // Load weight history
     await _loadWeightHistory();
@@ -68,32 +72,76 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = _userService.currentUser.value;
     if (user == null) return;
 
+    print('⚖️ Loading weight for ${_selectedWeightMonth.year}-${_selectedWeightMonth.month}');
+
     try {
-      final history = await _firestoreService.getWeightHistory(
+      // 1. Load initial weight (one time only)
+      if (initialWeight == null) {
+        initialWeight = await _firestoreService.getUserCurrentWeight(user.uid);
+        if (initialWeight != null) {
+          currentWeight = initialWeight!;
+          print('⚖️ Initial weight: $initialWeight kg');
+        }
+      }
+
+      // 2. Load goal weight (one time only)
+      if (goalWeight == null) {
+        goalWeight = await _firestoreService.getWeightGoal(user.uid);
+        print('⚖️ Goal weight: $goalWeight kg');
+      }
+
+      // 3. Load weight entries for THIS month only
+      final monthEntries = await _firestoreService.getWeightHistory(
         userId: user.uid,
         year: _selectedWeightMonth.year,
         month: _selectedWeightMonth.month,
       );
 
-      if (history.isNotEmpty) {
-        setState(() {
-          weightHistory = history.map((data) => WeightEntry(
-            date: data['date'],
-            weight: data['weight'],
-          )).toList();
-          currentWeight = weightHistory.last.weight;
-        });
-      }
+      print('⚖️ Found ${monthEntries.length} logged entries for this month');
 
-      // Load goal weight
-      final goal = await _firestoreService.getWeightGoal(user.uid);
-      if (goal != null) {
-        setState(() {
-          goalWeight = goal;
-        });
-      }
+      setState(() {
+        weightHistory = monthEntries.map((data) => WeightEntry(
+          date: data['date'] as DateTime,
+          weight: (data['weight'] as num).toDouble(),
+        )).toList();
+        
+        // Sort by date
+        weightHistory.sort((a, b) => a.date.compareTo(b.date));
+
+        // ✅ NEW: If no entries exist but we have initial weight, create a virtual entry
+        if (weightHistory.isEmpty && initialWeight != null) {
+          // Check if user signed up in this month
+          final userDoc = _userService.currentUser.value;
+          if (userDoc != null) {
+            // Use current month as signup month for display
+            final signupDate = DateTime.now(); // You can get actual signup date from user.createdAt
+            
+            // Only show initial weight in current month or signup month
+            if (_selectedWeightMonth.year == DateTime.now().year && 
+                _selectedWeightMonth.month == DateTime.now().month) {
+              weightHistory = [
+                WeightEntry(
+                  date: signupDate,
+                  weight: initialWeight!,
+                ),
+              ];
+              print('⚖️ Showing initial weight on graph: $initialWeight kg');
+            }
+          }
+        }
+
+        // Update current weight to latest entry
+        if (weightHistory.isNotEmpty) {
+          currentWeight = weightHistory.last.weight;
+          print('⚖️ Current weight updated: $currentWeight kg');
+        } else if (initialWeight != null) {
+          currentWeight = initialWeight!;
+          print('⚖️ Current weight (initial): $currentWeight kg');
+        }
+      });
+
     } catch (e) {
-      print('Error loading weight history: $e');
+      print('❌ Error loading weight: $e');
     }
   }
 
@@ -135,7 +183,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Future<void> _loadMonthlyWorkoutDays() async {
     final user = _userService.currentUser.value;
-    if (user == null) return;
+    if (user == null) {
+      print('❌ Cannot load monthly workout days - no user logged in');
+      return;
+    }
+
+    print('🔄 Loading monthly workout days for calendar...');
+    print('   Selected month: ${_selectedCalendarMonth.year}-${_selectedCalendarMonth.month}');
 
     try {
       final days = await _firestoreService.getMonthlyWorkoutDays(
@@ -144,11 +198,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
         month: _selectedCalendarMonth.month,
       );
 
+      print('✅ Received ${days.length} workout days for UI: $days');
+
       setState(() {
         completedDays = days;
       });
+      
+      print('✅ UI updated with completed days');
     } catch (e) {
-      print('Error loading monthly workout days: $e');
+      print('❌ Error loading monthly workout days: $e');
+    }
+  }
+
+  Future<void> _loadProfileStats() async {
+    final user = _userService.currentUser.value;
+    if (user == null) {
+      print('❌ No user logged in for profile stats');
+      return;
+    }
+
+    print('📊 Loading profile stats for user: ${user.uid}');
+    
+    try {
+      final stats = await _firestoreService.getUserProgressStats(user.uid);
+      print('📊 Fetched stats from Firestore: $stats');
+      
+      if (stats != null) {
+        setState(() {
+          totalWorkoutsCompleted = stats['totalWorkoutsCompleted'] ?? 0;
+          totalMinutesExercised = stats['totalMinutesExercised'] ?? 0;
+          totalCaloriesBurned = stats['totalCaloriesBurned'] ?? 0;
+        });
+        print('✅ Profile stats loaded: $totalWorkoutsCompleted workouts, $totalMinutesExercised min, $totalCaloriesBurned cal');
+      } else {
+        print('⚠️ No stats document found in Firestore');
+      }
+    } catch (e) {
+      print('❌ Error loading profile stats: $e');
     }
   }
 
@@ -356,19 +442,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSmallStat('4', 'Workouts'),
+                    _buildSmallStat('$totalWorkoutsCompleted', 'Workouts'), // ✅ DYNAMIC
                     Container(
                       width: 1,
                       height: 30,
                       color: Colors.grey[300],
                     ),
-                    _buildSmallStat('16', 'Kcal'),
+                    _buildSmallStat('$totalCaloriesBurned', 'Kcal'), // ✅ DYNAMIC
                     Container(
                       width: 1,
                       height: 30,
                       color: Colors.grey[300],
                     ),
-                    _buildSmallStat('2', 'Minutes'),
+                    _buildSmallStat('$totalMinutesExercised', 'Minutes'), // ✅ DYNAMIC
                   ],
                 ),
               ],
@@ -438,18 +524,28 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   // ========== ACHIEVEMENT SECTION ==========
   Widget _buildAchievementSection() {
-    // Mock achievements for now
+    // Get real achievements from controller
     final achievements = [
       if (_controller.userStreak.value >= 1) AchievementModel.firstWorkout,
-      if (_controller.userStreak.value >= 2) AchievementModel.twoDayStreak,  // ✅ CHANGED
+      if (_controller.userStreak.value >= 2) AchievementModel.twoDayStreak,
       if (_controller.userStreak.value >= 3) AchievementModel(
-        type: AchievementType.threeDayStreak,  // ✅ CHANGED
+        type: AchievementType.threeDayStreak,
         title: 'Workout 3 days',
         description: 'Completed 3 days of workouts',
         badgeNumber: 3,
         badgeStyle: BadgeStyle(
           primaryColor: const Color(0xFFFF9800),
           accentColor: const Color(0xFFF57C00),
+        ),
+      ),
+      if (_controller.userStreak.value >= 7) AchievementModel(
+        type: AchievementType.sevenDayStreak,
+        title: '7 Day Streak',
+        description: 'Completed 7 days of workouts',
+        badgeNumber: 7,
+        badgeStyle: BadgeStyle(
+          primaryColor: const Color(0xFF4CAF50),
+          accentColor: const Color(0xFF2E7D32),
         ),
       ),
     ].obs;
@@ -471,48 +567,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Achievement',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Scroll to show more
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      'All',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right, size: 20, color: Colors.grey[700]),
-                  ],
-                ),
-              ),
-            ],
+          // Header without "All" button
+          Text(
+            'Achievement',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
           ),
           const SizedBox(height: 16),
           
-          // Scrollable achievement badges
+          // Horizontal scrollable achievement badges
           SizedBox(
-            height: 160,
+            height: 170, // ✅ Increased height to prevent overflow
             child: Obx(() {
               if (achievements.isEmpty) {
                 return Center(
                   child: Text(
-                    'No achievements yet',
+                    'Complete workouts to earn achievements!',
                     style: GoogleFonts.poppins(
                       color: Colors.grey[500],
                       fontSize: 14,
@@ -524,10 +597,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(right: 20), // ✅ Extra padding for visual hint
                 itemCount: achievements.length,
                 itemBuilder: (context, index) {
-                  final achievement = achievements[index];
-                  return _buildAchievementBadge(achievement);
+                  return _buildAchievementBadge(
+                    achievements[index],
+                    isLast: index == achievements.length - 1,
+                  );
                 },
               );
             }),
@@ -537,16 +613,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  Widget _buildAchievementBadge(AchievementModel achievement) {
+  Widget _buildAchievementBadge(AchievementModel achievement, {bool isLast = false}) {
     return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 16),
+      width: 120, // ✅ Reduced width to fit more badges
+      margin: EdgeInsets.only(right: isLast ? 0 : 12), // ✅ Less spacing, no margin on last
       child: Column(
+        mainAxisSize: MainAxisSize.min, // ✅ Prevent overflow
         children: [
           // Badge with gradient background
           Container(
-            width: 100,
-            height: 100,
+            width: 90, // ✅ Reduced size
+            height: 90, // ✅ Reduced size
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -577,7 +654,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   child: Text(
                     achievement.badgeNumber.toString(),
                     style: GoogleFonts.poppins(
-                      fontSize: 48,
+                      fontSize: 36, // ✅ Slightly smaller
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
@@ -586,18 +663,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          // Achievement title
-          Text(
-            achievement.title,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+          const SizedBox(height: 8), // ✅ Reduced spacing
+          Flexible( // ✅ Added Flexible to prevent overflow
+            child: Text(
+              achievement.title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 13, // ✅ Slightly smaller
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           // Date
           Text(
@@ -714,6 +792,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 weightHistory,
                 goalWeight: goalWeight,
                 selectedMonth: _selectedWeightMonth,
+                initialWeight: initialWeight, // ✅ ADD THIS LINE
               ),
               child: Container(),
             ),
@@ -764,6 +843,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedWeightMonth.month - 1,
       );
     });
+    
+    // ✅ Show loading state with animation
     _loadWeightHistory();
   }
   
@@ -774,6 +855,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedWeightMonth.month + 1,
       );
     });
+    
+    // ✅ Show loading state with animation
     _loadWeightHistory();
   }
 
@@ -929,6 +1012,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedCalendarMonth.month - 1,
       );
     });
+    
+    // ✅ Smooth transition
     _loadMonthlyWorkoutDays();
   }
   
@@ -1287,11 +1372,13 @@ class _WeightGraphPainter extends CustomPainter {
   final List<WeightEntry> weightHistory;
   final double? goalWeight;
   final DateTime selectedMonth;
+  final double? initialWeight; // ✅ ADD THIS LINE
 
   _WeightGraphPainter(
     this.weightHistory, {
     this.goalWeight,
     required this.selectedMonth,
+    this.initialWeight, // ✅ ADD THIS LINE
   });
 
   @override
@@ -1473,6 +1560,20 @@ class _WeightGraphPainter extends CustomPainter {
         );
         startX += dashWidth + dashSpace;
       }
+           // ✅ ADD ONLY THIS PART (11 lines):
+           // Draw "Goal" label
+           textPainter.text = TextSpan(
+             text: 'Goal',
+             style: TextStyle(
+               color: Colors.grey[600],
+               fontSize: 9,
+               fontWeight: FontWeight.w500,
+             ),
+           );
+           textPainter.layout();
+           textPainter.paint(canvas, Offset(graphRight - textPainter.width - 5, goalY - 12));
+           // ✅ END OF ADDITION
+
     }
 
     // Draw X-axis labels (selected days: 1, 7, 14, 21, 28)

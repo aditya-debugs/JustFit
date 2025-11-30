@@ -214,6 +214,8 @@ class UserService extends GetxController {
       await _usersCollection.doc(uid).set({
         'onboardingData': onboardingData.toMap(),
         'hasCompletedOnboarding': true,
+        'weight': onboardingData.weight, // ✅ Save current weight
+        'goalWeight': onboardingData.goalWeight, // ✅ Save goal weight
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       }, SetOptions(merge: true));
 

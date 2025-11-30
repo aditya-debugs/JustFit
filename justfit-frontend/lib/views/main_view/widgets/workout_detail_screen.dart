@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'day_detail_sheet.dart';
 import '../../../data/models/workout/simple_workout_models.dart';
+import '../../workout_view/pre_workout_screen.dart'; // ✅ ADD THIS
+import '../../workout_view/active_workout_screen.dart';
+import '../../../data/models/workout/workout_exercise.dart';
+
 
 class WorkoutDetailScreen extends StatefulWidget {
   final String workoutTitle;
@@ -11,6 +15,8 @@ class WorkoutDetailScreen extends StatefulWidget {
   final String equipment;
   final String focusZones;
   final List<WorkoutSet> workoutSets;
+  final String? discoveryWorkoutId; // ✅ NEW - for tracking discovery workouts
+  final String? discoveryCategory; // ✅ NEW - for stats
 
   const WorkoutDetailScreen({
     Key? key,
@@ -21,6 +27,8 @@ class WorkoutDetailScreen extends StatefulWidget {
     required this.equipment,
     required this.focusZones,
     required this.workoutSets,
+    this.discoveryWorkoutId, // ✅ NEW
+    this.discoveryCategory, // ✅ NEW
   }) : super(key: key);
 
   static void navigateTo(
@@ -32,6 +40,8 @@ class WorkoutDetailScreen extends StatefulWidget {
     required String equipment,
     required String focusZones,
     required List<WorkoutSet> workoutSets,
+    String? discoveryWorkoutId, // ✅ NEW
+    String? discoveryCategory, // ✅ NEW
   }) {
     Navigator.push(
       context,
@@ -44,6 +54,8 @@ class WorkoutDetailScreen extends StatefulWidget {
           equipment: equipment,
           focusZones: focusZones,
           workoutSets: workoutSets,
+          discoveryWorkoutId: discoveryWorkoutId, // ✅ NEW
+          discoveryCategory: discoveryCategory, // ✅ NEW
         ),
       ),
     );
@@ -312,10 +324,52 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
           // Fixed start button at bottom
           Positioned(
+            bottom: 0,
             left: 0,
             right: 0,
-            bottom: 0,
-            child: _buildStartButton(context),
+            child: Container(
+              padding: const EdgeInsets.all(16), // ✅ CHANGED from 20 to 16
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05), // ✅ CHANGED from 0.1 to 0.05
+                    offset: const Offset(0, -2),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE91E63),
+                    borderRadius: BorderRadius.circular(12), // ✅ CHANGED from 28 to 12
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _navigateToPreWorkout,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            'Start Training',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -548,38 +602,37 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   Widget _buildStartButton(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // reduced padding
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, -2),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      top: false,
+      child: SizedBox(
+        width: double.infinity,
         child: Container(
-          width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFFFF1744),
+            color: const Color(0xFFE91E63),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {
-                print('Starting workout: ${widget.workoutTitle}');
-              },
+              onTap: _navigateToPreWorkout,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 12), // reduced height
                 child: Center(
                   child: Text(
-                    'Start',
+                    'Start Training',
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -592,6 +645,60 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           ),
         ),
       ),
+    ),
+  );
+}
+
+  // ✅ Navigate to pre-workout screen (heart rate screen)
+  void _navigateToPreWorkout() {
+    // Convert WorkoutSet to WorkoutExercise format
+    List<WorkoutExercise> exercises = [];
+
+    for (var set in widget.workoutSets) {
+      // Determine setType from set name
+      String setType = 'main';
+      if (set.setName.toLowerCase().contains('warm')) {
+        setType = 'warmup';
+      } else if (set.setName.toLowerCase().contains('cool')) {
+        setType = 'cooldown';
+      }
+
+      for (var exercise in set.exercises) {
+        exercises.add(WorkoutExercise(
+          name: exercise.name,
+          duration: exercise.duration,
+          setType: setType,
+        ));
+      }
+    }
+
+    if (exercises.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No exercises available for this workout')),
+      );
+      return;
+    }
+
+    print('🏋️ Starting discovery workout: ${widget.workoutTitle}');
+    print('   ID: ${widget.discoveryWorkoutId}');
+    print('   Category: ${widget.discoveryCategory}');
+
+    // ✅ Navigate to PreWorkoutScreen FIRST (just like plan workouts)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PreWorkoutScreen(
+          dayNumber: 0, // 0 = discovery workout
+          duration: widget.duration,
+          calories: widget.calories,
+          exercises: exercises,
+          discoveryWorkoutId: widget.discoveryWorkoutId, // ✅ Pass discovery data
+          discoveryWorkoutTitle: widget.workoutTitle, // ✅ Pass discovery data
+          discoveryCategory: widget.discoveryCategory, // ✅ Pass discovery data
+          fullWorkoutSets: widget.workoutSets, // ✅ Pass full details
+        ),
+      ),
     );
   }
+
 }

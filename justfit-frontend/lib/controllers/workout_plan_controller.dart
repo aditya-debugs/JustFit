@@ -217,9 +217,10 @@ Future<void> loadUserWorkoutPlan({bool skipCalendarUpdate = false}) async {
   /// ========== ENHANCED STREAK MANAGEMENT WITH FIRESTORE ==========
   
   /// Update streak after completing a workout with smart logic + Firestore
-  Future<AchievementModel?> updateStreakAfterWorkout(int completedDay) async {
+  Future<AchievementModel?> updateStreakAfterWorkout(int? dayNumber) async {
+  // dayNumber is null for discovery workouts, has value for plan workouts
     try {
-      print('🔥 Updating streak after completing day $completedDay');
+      print('🔥 Updating streak after workout (Day: ${dayNumber ?? 'Discovery'})');
       
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -504,6 +505,18 @@ FirebaseFirestore.instance
         
         // Mark day as completed in plan
         await markDayAsCompleted(dayNumber);
+
+        // Check workout count achievement
+        workoutAchievement = await _checkWorkoutCountAchievement();
+        
+        // Mark day as completed in plan
+        await markDayAsCompleted(dayNumber);
+        
+        // ✅ ADD THIS: Update total stats for plan workouts (same as discovery)
+        await _updateProgressStats(
+          caloriesBurned: caloriesBurned,
+          durationMinutes: durationMinutes,
+        );
         
         print('✅ Full workout completion processed');
       } else {
@@ -522,6 +535,132 @@ FirebaseFirestore.instance
     } catch (e) {
       print('❌ Error completing workout: $e');
       return {'success': false};
+    }
+  }
+
+  /// ✅ Complete a DISCOVERY workout (doesn't affect plan progression)
+  /// This is SEPARATE from plan workouts - won't touch currentDay or mark days complete
+  Future<Map<String, dynamic>> completeDiscoveryWorkout({
+    required String workoutId,
+    required String workoutTitle,
+    required int caloriesBurned,
+    required int durationMinutes,
+    required String workoutCategory,
+  }) async {
+    try {
+      final userId = _userService.currentUser.value?.uid;
+      if (userId == null) {
+        print('❌ No user logged in');
+        return {'success': false};
+      }
+
+      print('🏋️ Completing discovery workout: $workoutTitle...');
+
+      // 1. Save workout completion to Firestore (separate from plan workouts)
+      final completionId = 'discovery_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+      final dateStr = _formatDate(DateTime.now());
+      
+      await _firestoreService.saveWorkoutCompletion(
+        userId: userId,
+        workoutId: completionId,
+        planId: 'discovery', // Special ID - NOT tied to any plan
+        day: 0, // 0 = discovery workout, not a plan day
+        date: dateStr,
+        duration: durationMinutes,
+        calories: caloriesBurned,
+        exercisesCompleted: [],
+        isComplete: true,
+        workoutTitle: workoutTitle, // ✅ ADD - save the actual workout title
+        workoutCategory: workoutCategory, // ✅ ADD - save the category
+      );
+
+      // 2. Update streak (shared between plan and discovery workouts)
+      // This ensures streak increments once per day regardless of workout source
+      final streakAchievement = await updateStreakAfterWorkout(null); // null = not tied to plan day
+      
+      // 3. Check workout count achievement (counts all workouts)
+      final workoutAchievement = await _checkWorkoutCountAchievement();
+      
+      // 4. Update progress stats in Firestore
+      await _updateProgressStats(
+        caloriesBurned: caloriesBurned,
+        durationMinutes: durationMinutes,
+      );
+
+      print('✅ Discovery workout saved - Plan NOT affected');
+      
+      return {
+        'success': true,
+        'workoutAchievement': workoutAchievement,
+        'streakAchievement': streakAchievement,
+        'currentStreak': userStreak.value,
+        'weeklyProgress': weeklyProgress.toList(),
+      };
+    } catch (e) {
+      print('❌ Error completing discovery workout: $e');
+      return {'success': false};
+    }
+  }
+
+  /// ✅ Update progress stats (for both plan and discovery workouts)
+  Future<void> _updateProgressStats({
+    required int caloriesBurned,
+    required int durationMinutes,
+  }) async {
+    try {
+      final userId = _userService.currentUser.value?.uid;
+      if (userId == null) {
+        print('❌ _updateProgressStats: No user ID');
+        return;
+      }
+
+      print('🔥 _updateProgressStats called:');
+      print('   Duration: $durationMinutes min');
+      print('   Calories: $caloriesBurned cal');
+      print('   User: $userId');
+
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('progress')
+          .doc('stats');
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        
+        if (snapshot.exists) {
+          final data = snapshot.data() ?? {};
+          final currentWorkouts = data['totalWorkoutsCompleted'] ?? 0;
+          final currentMinutes = data['totalMinutesExercised'] ?? 0;
+          final currentCalories = data['totalCaloriesBurned'] ?? 0;
+
+          print('📊 Current stats in Firestore:');
+          print('   Workouts: $currentWorkouts → ${currentWorkouts + 1}');
+          print('   Minutes: $currentMinutes → ${currentMinutes + durationMinutes}');
+          print('   Calories: $currentCalories → ${currentCalories + caloriesBurned}');
+
+          transaction.update(docRef, {
+            'totalWorkoutsCompleted': currentWorkouts + 1,
+            'totalMinutesExercised': currentMinutes + durationMinutes,
+            'totalCaloriesBurned': currentCalories + caloriesBurned,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          print('📊 Creating new stats document');
+          transaction.set(docRef, {
+            'totalWorkoutsCompleted': 1,
+            'totalMinutesExercised': durationMinutes,
+            'totalCaloriesBurned': caloriesBurned,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+      print('✅ Progress stats updated successfully!');
+    } catch (e) {
+      print('❌ Error updating progress stats: $e');
+      print('   Stack trace: ${StackTrace.current}');
     }
   }
 

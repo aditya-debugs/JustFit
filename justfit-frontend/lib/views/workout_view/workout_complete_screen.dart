@@ -11,6 +11,8 @@ import 'package:get/get.dart';
 import '../main_view/main_screen.dart'; // ✅ NEW
 import '../../data/models/workout/workout_exercise.dart';
 import '../../controllers/workout_audio_controller.dart';
+import '../../data/models/workout/simple_workout_models.dart'; // ✅ ADD THIS
+
 
 class WorkoutCompleteScreen extends StatefulWidget {
   final int dayNumber;
@@ -21,6 +23,10 @@ class WorkoutCompleteScreen extends StatefulWidget {
   final AchievementModel? earnedAchievement;
   final bool isPartialWorkout; // ✅ NEW
   final List<WorkoutExercise> exercises;
+  final String? discoveryWorkoutId; // ✅ NEW - null for plan workouts
+  final String? discoveryWorkoutTitle; // ✅ NEW - null for plan workouts
+  final String? discoveryCategory; // ✅ NEW - null for plan workouts
+  final List<WorkoutSet>? fullWorkoutSets; // ✅ NEW
 
   const WorkoutCompleteScreen({
     Key? key,
@@ -32,6 +38,10 @@ class WorkoutCompleteScreen extends StatefulWidget {
     this.earnedAchievement,
     this.isPartialWorkout = false, // ✅ NEW default
     required this.exercises, // ✅ ADD THIS
+    this.discoveryWorkoutId, // ✅ NEW
+    this.discoveryWorkoutTitle, // ✅ NEW
+    this.discoveryCategory, // ✅ NEW
+    this.fullWorkoutSets, // ✅ NEW
   }) : super(key: key);
 
   @override
@@ -430,18 +440,37 @@ void initState() {
     try {
       final workoutPlanController = Get.find<WorkoutPlanController>();
       
-      // 1. Complete the workout (saves to Firestore, updates streak if full completion)
-      final result = await workoutPlanController.completeWorkout(
-        dayNumber: widget.dayNumber,
-        caloriesBurned: widget.totalCalories,
-        durationMinutes: widget.totalMinutes,
-        workoutType: 'daily_workout',
-        isFullCompletion: !widget.isPartialWorkout, // NEW: Pass completion status
-      );
+      // ✅ CHECK: Is this a discovery workout or plan workout?
+      final isDiscoveryWorkout = widget.discoveryWorkoutId != null;
+
+      Map<String, dynamic> result;
+
+      if (isDiscoveryWorkout) {
+        // ===== DISCOVERY WORKOUT FLOW =====
+        print('🔍 Processing DISCOVERY workout completion...');
+        
+        result = await workoutPlanController.completeDiscoveryWorkout(
+          workoutId: widget.discoveryWorkoutId!,
+          workoutTitle: widget.discoveryWorkoutTitle ?? 'Discovery Workout',
+          caloriesBurned: widget.totalCalories,
+          durationMinutes: widget.totalMinutes,
+          workoutCategory: widget.discoveryCategory ?? 'general',
+        );
+      } else {
+        // ===== PLAN WORKOUT FLOW (ORIGINAL - UNTOUCHED) =====
+        print('📅 Processing PLAN workout completion...');
+        
+        result = await workoutPlanController.completeWorkout(
+          dayNumber: widget.dayNumber,
+          caloriesBurned: widget.totalCalories,
+          durationMinutes: widget.totalMinutes,
+          workoutType: 'daily_workout',
+          isFullCompletion: !widget.isPartialWorkout,
+        );
+      }
 
       if (result['success'] != true) {
         print('⚠️ Failed to save workout completion');
-        // Still navigate to activity even if save failed
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
@@ -453,7 +482,7 @@ void initState() {
         return;
       }
 
-      // 2. Get achievements from result
+      // 2. Get achievements from result (same for both flows)
       final workoutAchievement = result['workoutAchievement'] as AchievementModel?;
       final streakAchievement = result['streakAchievement'] as AchievementModel?;
       final currentStreak = result['currentStreak'] as int? ?? 0;
@@ -465,7 +494,7 @@ void initState() {
 
       if (!mounted) return;
 
-      // 3. FLOW LOGIC (Based on your requirements)
+      // 3. NAVIGATION FLOW (same for both)
       
       // If partial workout - go straight to activity (no achievements/streaks)
       if (widget.isPartialWorkout) {
@@ -495,7 +524,7 @@ void initState() {
                     builder: (context) => StreakScreen(
                       currentStreak: currentStreak,
                       weeklyProgress: weeklyProgress,
-                      achievement: streakAchievement, // Pass streak achievement to streak screen
+                      achievement: streakAchievement,
                     ),
                   ),
                 );
@@ -514,7 +543,7 @@ void initState() {
             builder: (context) => StreakScreen(
               currentStreak: currentStreak,
               weeklyProgress: weeklyProgress,
-              achievement: streakAchievement, // Streak achievement will be shown by streak screen
+              achievement: streakAchievement,
             ),
           ),
         );

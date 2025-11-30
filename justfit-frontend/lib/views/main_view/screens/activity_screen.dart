@@ -812,7 +812,9 @@ class ActivityScreen extends StatefulWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Day ${workout['day']} Workout',
+                      workout['day'] == 0 
+                          ? (workout['workoutTitle'] ?? 'Discovery Workout')
+                          : 'Day ${workout['day']} Workout',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -26,6 +26,10 @@ class ActiveWorkoutScreen extends StatefulWidget {
   final int? initialHeartRate;
   final int? estimatedCalories;
   final int? estimatedDuration;
+  final String? discoveryWorkoutId; // ✅ NEW - null for plan workouts
+  final String? discoveryWorkoutTitle; // ✅ NEW - null for plan workouts
+  final String? discoveryCategory; // ✅ NEW - null for plan workouts
+  final List<WorkoutSet>? fullWorkoutSets; // ✅ NEW - complete exercise details
 
   const ActiveWorkoutScreen({
     Key? key,
@@ -34,6 +38,10 @@ class ActiveWorkoutScreen extends StatefulWidget {
     this.initialHeartRate,
     this.estimatedCalories,
     this.estimatedDuration,
+    this.discoveryWorkoutId, // ✅ NEW
+    this.discoveryWorkoutTitle, // ✅ NEW
+    this.discoveryCategory, // ✅ NEW
+    this.fullWorkoutSets, // ✅ NEW
   }) : super(key: key);
 
   @override
@@ -774,17 +782,38 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   _audioController.setWorkoutPaused(true);
                   
                   final exercise = currentExercise;
+                  Exercise? exerciseDetails;
                   
-                  final exerciseDetails = await _fetchExerciseDetails(exercise.name);
+                  // ✅ For discovery workouts with full details, use them directly (INSTANT)
+                  if (widget.fullWorkoutSets != null) {
+                    for (var set in widget.fullWorkoutSets!) {
+                      for (var ex in set.exercises) {
+                        if (ex.name == exercise.name) {
+                          exerciseDetails = ex;
+                          print('✅ Using cached exercise details (instant)');
+                          break;
+                        }
+                      }
+                      if (exerciseDetails != null) break;
+                    }
+                  }
                   
-                  await ExerciseDetailSheet.show(
-                    context,
-                    exercise: exerciseDetails ?? Exercise(
-                      name: exercise.name,
-                      duration: exercise.duration,
-                      actionSteps: ['Loading...'],
-                    ),
-                  );
+                  // Fallback: fetch from API if not found (for plan workouts)
+                  if (exerciseDetails == null) {
+                    print('📡 Fetching from API...');
+                    exerciseDetails = await _fetchExerciseDetails(exercise.name);
+                  }
+                  
+                  if (context.mounted) {
+                    await ExerciseDetailSheet.show(
+                      context,
+                      exercise: exerciseDetails ?? Exercise(
+                        name: exercise.name,
+                        duration: exercise.duration,
+                        actionSteps: ['Exercise details not available'],
+                      ),
+                    );
+                  }
                   
                   setState(() {
                     _isPaused = false;
@@ -1497,10 +1526,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           totalCalories: totalCalories,
           totalMinutes: totalMinutes,
           totalActions: totalActions,
-          workoutName: 'Day ${widget.dayNumber} Workout (Incomplete)',
+          workoutName: widget.dayNumber == 0 
+              ? (widget.discoveryWorkoutTitle ?? 'Discovery Workout (Incomplete)')
+              : 'Day ${widget.dayNumber} Workout (Incomplete)',
           earnedAchievement: null,
-          isPartialWorkout: true,
+          isPartialWorkout: widget.dayNumber != 0,
           exercises: widget.exercises,
+          discoveryWorkoutId: widget.discoveryWorkoutId,
+          discoveryWorkoutTitle: widget.discoveryWorkoutTitle,
+          discoveryCategory: widget.discoveryCategory,
+          fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD THIS
         ),
       ),
     );
@@ -1526,7 +1561,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       
   final minimumMinutes = (estimatedMinutes * AppConfig.qualityThreshold).ceil();
 
-  final isQualityWorkout = totalMinutes >= minimumMinutes;
+  // For discovery workouts (dayNumber = 0), always treat as quality if any time recorded
+  final isQualityWorkout = widget.dayNumber == 0 
+      ? totalMinutes > 0  // Discovery: just needs some time
+      : totalMinutes >= minimumMinutes;  // Plan: needs quality threshold
 
   if (AppConfig.isTestingMode) {
     print('${AppConfig.modeLabel} - Workout check bypassed');
@@ -1546,10 +1584,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         totalCalories: totalCalories,
         totalMinutes: totalMinutes,
         totalActions: totalActions,
-        workoutName: 'Day ${widget.dayNumber} Workout',
+        workoutName: widget.dayNumber == 0 
+            ? (widget.discoveryWorkoutTitle ?? 'Discovery Workout')
+            : 'Day ${widget.dayNumber} Workout',
         earnedAchievement: null,
         isPartialWorkout: !isQualityWorkout,
         exercises: widget.exercises,
+        discoveryWorkoutId: widget.discoveryWorkoutId,
+        discoveryWorkoutTitle: widget.discoveryWorkoutTitle,
+        discoveryCategory: widget.discoveryCategory,
+        fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD THIS
       ),
     ),
   );

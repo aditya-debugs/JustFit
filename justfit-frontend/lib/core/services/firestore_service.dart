@@ -17,6 +17,8 @@ class FirestoreService extends GetxService {
     required int calories,
     required List<String> exercisesCompleted,
     required bool isComplete,
+    String? workoutTitle, // ✅ NEW - for discovery workouts
+    String? workoutCategory, // ✅ NEW - for discovery workouts
   }) async {
     try {
       final docRef = _firestore
@@ -25,7 +27,7 @@ class FirestoreService extends GetxService {
           .collection('workouts')
           .doc(workoutId);
 
-      await docRef.set({
+      final data = {
         'workoutId': workoutId,
         'planId': planId,
         'day': day,
@@ -35,7 +37,17 @@ class FirestoreService extends GetxService {
         'exercisesCompleted': exercisesCompleted,
         'isComplete': isComplete,
         'completedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      
+      // Add optional fields for discovery workouts
+      if (workoutTitle != null) {
+        data['workoutTitle'] = workoutTitle;
+      }
+      if (workoutCategory != null) {
+        data['workoutCategory'] = workoutCategory;
+      }
+      
+      await docRef.set(data);
 
       print('✅ Workout saved to Firestore: Day $day, $duration min, $calories cal');
     } catch (e) {
@@ -298,27 +310,67 @@ class FirestoreService extends GetxService {
     required int month,
   }) async {
     try {
-      final startDate = DateTime(year, month, 1);
-      final endDate = DateTime(year, month + 1, 0);
+      print('⚖️ Querying weight history for $year-$month');
       
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
-          .collection('weight_logs')
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .orderBy('date', descending: false)
+          .collection('weight_history')
+          .where('year', isEqualTo: year)
+          .where('month', isEqualTo: month)
+          // ✅ Removed .orderBy('day') - we'll sort in code instead
           .get();
+
+      print('⚖️ Found ${snapshot.docs.length} weight entries in Firestore');
+
+      final List<Map<String, dynamic>> history = [];
       
-      return snapshot.docs.map((doc) {
+      for (var doc in snapshot.docs) {
         final data = doc.data();
-        return {
+        final timestamp = data['date'] as Timestamp;
+        history.add({
+          'date': timestamp.toDate(),
           'weight': data['weight'],
-          'date': (data['date'] as Timestamp).toDate(),
-        };
-      }).toList();
+        });
+      }
+
+      return history;
     } catch (e) {
-      print('Error getting weight history: $e');
+      print('❌ Error getting weight history: $e');
+      return [];
+    }
+  }
+
+  /// Get ALL weight history entries (for timeline continuity)
+  Future<List<Map<String, dynamic>>> getAllWeightHistory(String userId) async {
+    try {
+      print('⚖️ Fetching ALL weight history for timeline');
+      
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('weight_history')
+          .get();
+
+      print('⚖️ Found ${snapshot.docs.length} total weight entries');
+
+      final List<Map<String, dynamic>> history = [];
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = data['date'] as Timestamp;
+        history.add({
+          'date': timestamp.toDate(),
+          'weight': data['weight'],
+        });
+      }
+
+      // Sort by date
+      history.sort((a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
+
+      return history;
+    } catch (e) {
+      print('❌ Error getting all weight history: $e');
       return [];
     }
   }
@@ -326,20 +378,85 @@ class FirestoreService extends GetxService {
   /// Get user's weight goal
   Future<double?> getWeightGoal(String userId) async {
     try {
+      print('🎯 Fetching goal weight...');
+      
+      // First check top-level goalWeight field
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        
+        // Check top-level goalWeight
+        if (data?['goalWeight'] != null) {
+          final goal = (data!['goalWeight'] as num).toDouble();
+          print('🎯 Found goal in profile: $goal kg');
+          return goal;
+        }
+        
+        // Check nested onboardingData
+        if (data?['onboardingData'] != null) {
+          final onboardingData = data!['onboardingData'] as Map<String, dynamic>;
+          if (onboardingData['goalWeight'] != null) {
+            final goal = (onboardingData['goalWeight'] as num).toDouble();
+            print('🎯 Found goal in onboardingData: $goal kg');
+            return goal;
+          }
+        }
+      }
+      
+      // Fallback: check goals collection
       final doc = await _firestore
           .collection('users')
           .doc(userId)
           .collection('goals')
-          .doc('weight')
+          .doc('weight_goal')
           .get();
       
-      if (doc.exists) {
-        return doc.data()?['targetWeight'];
+      if (doc.exists && doc.data()?['targetWeight'] != null) {
+        final goal = (doc.data()!['targetWeight'] as num).toDouble();
+        print('🎯 Found goal in goals collection: $goal kg');
+        return goal;
       }
+      
+      print('⚠️ No goal weight found');
       return null;
     } catch (e) {
-      print('Error getting weight goal: $e');
+      print('❌ Error getting goal weight: $e');
       return null;
+    }
+  }
+
+  /// Save weight entry
+  Future<void> saveWeightEntry({
+    required String userId,
+    required double weight,
+    DateTime? date,
+  }) async {
+    try {
+      final entryDate = date ?? DateTime.now();
+      final docId = '${entryDate.year}_${entryDate.month}_${entryDate.day}';
+      
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('weight_history')
+          .doc(docId)
+          .set({
+        'weight': weight,
+        'date': Timestamp.fromDate(entryDate),
+        'year': entryDate.year,
+        'month': entryDate.month,
+        'day': entryDate.day,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      print('✅ Weight entry saved: $weight kg on ${entryDate.year}-${entryDate.month}-${entryDate.day}');
+    } catch (e) {
+      print('❌ Error saving weight entry: $e');
+      rethrow;
     }
   }
   
@@ -442,7 +559,13 @@ Future<Set<int>> getMonthlyWorkoutDays({
 }) async {
   try {
     final startDate = DateTime(year, month, 1);
-    final endDate = DateTime(year, month + 1, 0);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59); // ✅ Include end of last day
+    
+    print('📅 ========== MONTHLY WORKOUT QUERY ==========');
+    print('   User: $userId');
+    print('   Month: $year-$month');
+    print('   Start: $startDate');
+    print('   End: $endDate');
     
     final snapshot = await _firestore
         .collection('users')
@@ -452,18 +575,110 @@ Future<Set<int>> getMonthlyWorkoutDays({
         .where('completedAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
         .get();
     
+    print('📅 Found ${snapshot.docs.length} workout documents');
+    
     final Set<int> workoutDays = {};
     
     for (var doc in snapshot.docs) {
       final data = doc.data();
-      final date = (data['completedAt'] as Timestamp).toDate();
-      workoutDays.add(date.day);
+      print('   📄 Document ID: ${doc.id}');
+      print('      Data keys: ${data.keys.toList()}');
+      
+      final completedAt = data['completedAt'];
+      if (completedAt != null) {
+        final date = (completedAt as Timestamp).toDate();
+        workoutDays.add(date.day);
+        print('      ✅ Workout on day ${date.day} (${date})');
+      } else {
+        print('      ⚠️ No completedAt field!');
+      }
     }
+    
+    print('📅 Final workout days set: $workoutDays');
+    print('📅 ==========================================');
     
     return workoutDays;
   } catch (e) {
-    print('Error getting monthly workout days: $e');
+    print('❌ Error getting monthly workout days: $e');
+    print('   Stack trace: ${StackTrace.current}');
     return {};
   }
 }
+
+  /// Get user's total progress stats
+  Future<Map<String, dynamic>?> getUserProgressStats(String userId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('progress')
+          .doc('stats')
+          .get();
+
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      print('❌ Error fetching user progress stats: $e');
+      return null;
+    }
+  }
+
+  /// Get user's profile weight (from onboarding or latest entry)
+  Future<double?> getUserCurrentWeight(String userId) async {
+    try {
+      print('⚖️ Fetching user weight from profile...');
+      
+      // First try to get from user profile document
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        
+        // Check top-level weight field
+        if (data?['weight'] != null) {
+          final weight = (data!['weight'] as num).toDouble();
+          print('⚖️ Found weight in profile: $weight kg');
+          return weight;
+        }
+        
+        // Check nested onboardingData
+        if (data?['onboardingData'] != null) {
+          final onboardingData = data!['onboardingData'] as Map<String, dynamic>;
+          if (onboardingData['weight'] != null) {
+            final weight = (onboardingData['weight'] as num).toDouble();
+            print('⚖️ Found weight in onboardingData: $weight kg');
+            return weight;
+          }
+        }
+      }
+      
+      // Fallback: get latest weight entry from history
+      print('⚖️ No weight in profile, checking weight_history...');
+      final latestSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('weight_history')
+          .orderBy('date', descending: true)
+          .limit(1)
+          .get();
+      
+      if (latestSnapshot.docs.isNotEmpty) {
+        final weight = (latestSnapshot.docs.first.data()['weight'] as num).toDouble();
+        print('⚖️ Found weight in history: $weight kg');
+        return weight;
+      }
+      
+      print('⚠️ No weight found anywhere');
+      return null;
+    } catch (e) {
+      print('❌ Error getting user current weight: $e');
+      return null;
+    }
+  }
+
 }

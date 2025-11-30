@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../data/models/user/onboarding_data_model.dart';
 import '../core/services/user_service.dart';
 import '../core/services/workout_service.dart';
+import '../core/services/firestore_service.dart'; // ✅ ADD THIS LINE
 import '../controllers/workout_plan_controller.dart';
 
 class OnboardingController extends GetxController {
@@ -479,6 +480,47 @@ class OnboardingController extends GetxController {
     chronicDiseasesConcern.value = false;
     goalAchievementFeeling.value = null;
     goalReward.value = null;
+  }
+
+  // ========== SAVE INITIAL WEIGHT ==========
+  
+  /// Save user's initial weight to Firebase when onboarding completes
+  Future<void> saveInitialWeight() async {
+    final user = _userService.currentUser.value;
+    if (user == null) {
+      print('❌ No user logged in, cannot save initial weight');
+      return;
+    }
+
+    if (weight.value <= 0) {
+      print('⚠️ Invalid weight value: ${weight.value}');
+      return;
+    }
+
+    try {
+      // ✅ Use FirestoreService instead of direct Firestore access
+      final firestoreService = Get.find<FirestoreService>();
+      
+      // Save current weight as initial entry
+      await firestoreService.saveWeightEntry(
+        userId: user.uid,
+        weight: weight.value,
+        date: DateTime.now(),
+      );
+      
+      // Save goal weight if valid
+      if (goalWeight.value > 0 && goalWeight.value < 500) {
+        await firestoreService.setWeightGoal(
+          userId: user.uid,
+          targetWeight: goalWeight.value,
+        );
+        print('✅ Goal weight saved: ${goalWeight.value} kg');
+      }
+      
+      print('✅ Initial weight logged: ${weight.value} kg');
+    } catch (e) {
+      print('❌ Error saving initial weight: $e');
+    }
   }
 
   // ========== AI BACKEND CALL (For later) ==========

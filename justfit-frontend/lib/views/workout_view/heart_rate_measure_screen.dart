@@ -7,12 +7,17 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../common_widgets/heart_rate_gauge.dart';
 import 'heart_rate_result_screen.dart';
 import '../../data/models/workout/workout_exercise.dart';
+import '../../data/models/workout/simple_workout_models.dart'; // ✅ ADD THIS
 
 class HeartRateMeasureScreen extends StatefulWidget {
   final int dayNumber;
   final int duration;
   final List<WorkoutExercise> exercises;
   final int calories;
+  final String? discoveryWorkoutId; // ✅ NEW
+  final String? discoveryWorkoutTitle; // ✅ NEW
+  final String? discoveryCategory; // ✅ NEW
+  final List<WorkoutSet>? fullWorkoutSets; // ✅ NEW
 
   const HeartRateMeasureScreen({
     Key? key,
@@ -20,6 +25,10 @@ class HeartRateMeasureScreen extends StatefulWidget {
     required this.duration,
     required this.calories,
     required this.exercises,
+    this.discoveryWorkoutId, // ✅ NEW
+    this.discoveryWorkoutTitle, // ✅ NEW
+    this.discoveryCategory, // ✅ NEW
+    this.fullWorkoutSets, // ✅ NEW
   }) : super(key: key);
 
   @override
@@ -378,6 +387,10 @@ class _HeartRateMeasureScreenState extends State<HeartRateMeasureScreen>
         duration: widget.duration,
         calories: widget.calories,
         exercises: widget.exercises, // ✅ ADD THIS
+        discoveryWorkoutId: widget.discoveryWorkoutId, // ✅ ADD
+        discoveryWorkoutTitle: widget.discoveryWorkoutTitle, // ✅ ADD
+        discoveryCategory: widget.discoveryCategory, // ✅ ADD
+        fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD
       ),
       ),
     );

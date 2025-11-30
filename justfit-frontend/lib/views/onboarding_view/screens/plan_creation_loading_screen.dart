@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../../controllers/workout_plan_controller.dart';
+import '../../../controllers/onboarding_controller.dart'; // ✅ ADD THIS
 
 class PlanCreationLoadingScreen extends StatefulWidget {
   final VoidCallback? onComplete;
@@ -34,6 +35,7 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
   bool _planReady = false;
 
   final WorkoutPlanController _planController = Get.find<WorkoutPlanController>();
+  final OnboardingController _onboardingController = Get.find<OnboardingController>(); // ✅ ADD THIS
 
   // Loading messages that rotate
   final List<String> _loadingMessages = [
@@ -152,9 +154,13 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       );
 
       // Wait a bit for the animation, then complete
-      Future.delayed(const Duration(milliseconds: 800), () {
+      Future.delayed(const Duration(milliseconds: 800), () async {
         if (mounted) {
           _pollTimer?.cancel();
+          
+          // ✅ Save initial weight entry
+          await _onboardingController.saveInitialWeight();
+          
           widget.onComplete?.call();
         }
       });

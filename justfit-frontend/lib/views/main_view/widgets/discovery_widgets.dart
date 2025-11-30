@@ -234,6 +234,8 @@ class WorkoutCard extends StatelessWidget {
           equipment: fullWorkout.equipment,
           focusZones: fullWorkout.focusZones,
           workoutSets: _convertToWorkoutSets(fullWorkout.workoutSets),
+          discoveryWorkoutId: fullWorkout.id, // ✅ ADD THIS
+          discoveryCategory: fullWorkout.category, // ✅ ADD THIS
         );
       },
       child: Container(
@@ -581,6 +583,8 @@ class DanceCard extends StatelessWidget {
           equipment: fullWorkout.equipment,
           focusZones: fullWorkout.focusZones,
           workoutSets: _convertToWorkoutSets(fullWorkout.workoutSets),
+          discoveryWorkoutId: fullWorkout.id, // ✅ ADD THIS LINE
+          discoveryCategory: fullWorkout.category, // ✅ ADD THIS LINE
         );
       },
       child: Container(
