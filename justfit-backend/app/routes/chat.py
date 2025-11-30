@@ -12,11 +12,12 @@ async def send_message(chat_message: ChatMessage):
     try:
         response = await chatbot_service.get_response(
             message=chat_message.message,
-            context=chat_message.context
+            context=chat_message.userContext,
+            conversation_history=chat_message.conversationHistory
         )
         return {
             "response": response,
-            "userId": chat_message.userId
+            "suggestions": []  # TODO: Add AI-generated suggestions later
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

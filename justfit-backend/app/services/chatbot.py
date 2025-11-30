@@ -38,12 +38,26 @@ You are a friendly, knowledgeable fitness coach assistant named "JustFit AI". Yo
         
         return base_prompt
     
-    async def get_response(self, message: str, context: Optional[dict] = None) -> str:
+    async def get_response(
+        self, 
+        message: str, 
+        context: Optional[dict] = None,
+        conversation_history: Optional[list] = None
+    ) -> str:
         """
-        Get chatbot response for user message
+        Get chatbot response for user message with conversation history
         """
         try:
             prompt = self._build_chat_prompt(message, context)
+            
+            # Add conversation history if provided
+            if conversation_history:
+                history_text = "\n**Previous Conversation:**\n"
+                for msg in conversation_history[-5:]:  # Last 5 messages for context
+                    role = "User" if msg.get('role') == 'user' else "Assistant"
+                    history_text += f"{role}: {msg.get('content', '')}\n"
+                prompt = prompt.replace("**User Question:**", history_text + "\n**User Question:**")
+            
             response = await self.gemini.generate_content(prompt)
             return response
         except Exception as e:

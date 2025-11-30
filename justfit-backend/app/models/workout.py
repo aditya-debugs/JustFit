@@ -143,5 +143,6 @@ class ExerciseDetailResponse(BaseModel):
 class ChatMessage(BaseModel):
     """Chat message model"""
     message: str
-    userId: str
-    context: Optional[dict] = None
+    userId: Optional[str] = None
+    conversationHistory: Optional[List[dict]] = None
+    userContext: Optional[dict] = None
