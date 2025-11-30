@@ -4,7 +4,7 @@ from app.models.workout import WorkoutPlan, ExerciseDetailRequest, ExerciseDetai
 from app.services.workout_generator import workout_generator
 from app.services.exercise_details_generator import exercise_details_generator
 
-router = APIRouter(prefix="/api/workout", tags=["Workout"])
+router = APIRouter(tags=["Workout"])
 
 @router.post("/generate", response_model=WorkoutPlan)
 async def generate_workout_plan(request: WorkoutPlanRequest):

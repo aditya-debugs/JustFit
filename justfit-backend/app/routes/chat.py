@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException
 from app.models.workout import ChatMessage
 from app.services.chatbot import chatbot_service
 
-router = APIRouter(prefix="/api/chat", tags=["Chat"])
+router = APIRouter(tags=["Chat"])
 
-@router.post("/message")
+@router.post("")
 async def send_message(chat_message: ChatMessage):
     """
     Send a message to the fitness chatbot
@@ -29,6 +29,6 @@ async def test_chat_endpoint():
     return {
         "message": "Chat endpoint is working!",
         "available_endpoints": [
-            "POST /api/chat/message - Send message to chatbot"
+            "POST /api/chat - Send message to chatbot"
         ]
     }
