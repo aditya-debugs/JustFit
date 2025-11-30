@@ -929,6 +929,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
           builder: (context) => RestDayScreen(
             dayNumber: day.dayNumber,
             description: day.dayTitle,
+            isLocked: isLocked, // Pass lock status
           ),
         ),
       );

@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../../core/services/user_service.dart';
 
-
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({Key? key}) : super(key: key);
 
@@ -26,21 +25,23 @@ class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
 
-  class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProviderStateMixin {
+class _ActivityScreenState extends State<ActivityScreen>
+    with SingleTickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now();
   int _calorieGoal = 430; // Will be calculated dynamically from workout plan
-  
+
   // ✅ Firestore integration
   late FirestoreService _firestoreService;
   late UserService _userService;
-  
+
   // ✅ Reactive workout lists
-  final RxList<Map<String, dynamic>> _todayWorkouts = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> _todayWorkouts =
+      <Map<String, dynamic>>[].obs;
   final RxBool _isLoading = true.obs;
-  
+
   // ✅ Day-specific data storage
   Map<String, DayActivityData> _dayDataMap = {};
-  
+
   // Animation controller for smooth transitions
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -48,11 +49,11 @@ class ActivityScreen extends StatefulWidget {
   @override
   void initState() {
     super.initState();
-    
+
     // ✅ Initialize services
     _firestoreService = Get.find<FirestoreService>();
     _userService = Get.find<UserService>();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -60,13 +61,13 @@ class ActivityScreen extends StatefulWidget {
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
+
     // ✅ Calculate dynamic calorie goal from workout plan
     _calculateCalorieGoal();
-    
+
     // ✅ Load today's workouts from Firestore
     _loadTodayWorkouts();
-    
+
     _animationController.forward();
   }
 
@@ -79,21 +80,22 @@ class ActivityScreen extends StatefulWidget {
   // ✅ NEW: Load workouts from Firestore
   Future<void> _loadTodayWorkouts() async {
     _isLoading.value = true;
-    
+
     try {
       final user = _userService.currentUser.value;
       if (user != null) {
-        final workouts = await _firestoreService.getTodayWorkouts(userId: user.uid);
+        final workouts =
+            await _firestoreService.getTodayWorkouts(userId: user.uid);
         _todayWorkouts.value = workouts;
         print('✅ Loaded ${workouts.length} workouts from Firestore');
-        
+
         // Update calorie count based on real workouts
         if (workouts.isNotEmpty) {
           final totalCalories = workouts.fold<int>(
             0,
             (sum, workout) => sum + ((workout['calories'] as int?) ?? 0),
           );
-          
+
           final today = _formatDate(DateTime.now());
           if (_dayDataMap.containsKey(today)) {
             setState(() {
@@ -114,7 +116,7 @@ class ActivityScreen extends StatefulWidget {
     try {
       final user = _userService.currentUser.value;
       if (user == null) return;
-      
+
       // Get user's active workout plan from Firestore
       final planSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -123,22 +125,22 @@ class ActivityScreen extends StatefulWidget {
           .where('status', isEqualTo: 'active')
           .limit(1)
           .get();
-      
+
       if (planSnapshot.docs.isEmpty) {
         print('⚠️ No active workout plan found, using default goal');
         return;
       }
-      
+
       final planData = planSnapshot.docs.first.data();
-      
+
       // Try to get dailyWorkouts from the plan
       final dailyWorkouts = planData['dailyWorkouts'] as List<dynamic>?;
-      
+
       if (dailyWorkouts == null || dailyWorkouts.isEmpty) {
         print('⚠️ No daily workouts in plan, using default goal');
         return;
       }
-      
+
       // Calculate average daily calories from all workouts in the plan
       final totalCalories = dailyWorkouts.fold<int>(
         0,
@@ -147,17 +149,16 @@ class ActivityScreen extends StatefulWidget {
           return sum + (calories ?? 0);
         },
       );
-      
+
       if (totalCalories > 0) {
         final avgCalories = (totalCalories / dailyWorkouts.length).round();
-        
+
         setState(() {
           _calorieGoal = avgCalories;
         });
-        
+
         print('✅ Calorie goal calculated from plan: $_calorieGoal kcal/day');
       }
-      
     } catch (e) {
       print('❌ Error calculating calorie goal: $e');
       // Keep default value of 430
@@ -167,30 +168,32 @@ class ActivityScreen extends StatefulWidget {
   /// ✅ Load workouts for a specific date from Firestore
   Future<void> _loadWorkoutsForDate(DateTime date) async {
     _isLoading.value = true;
-    
+
     try {
       final user = _userService.currentUser.value;
       if (user == null) {
         _isLoading.value = false;
         return;
       }
-      
+
       // Query using timestamp range (more reliable)
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
-      final dateStr = _formatDate(date);  // ← ADD THIS LINE
-      
+      final dateStr = _formatDate(date); // ← ADD THIS LINE
+
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('workouts')
-          .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('completedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('completedAt', isLessThan: Timestamp.fromDate(endOfDay))
           .get();
-      
+
       final workouts = snapshot.docs.map((doc) => doc.data()).toList();
-      print('✅ Loaded ${workouts.length} workouts for ${date.toString().split(' ')[0]}');
-      
+      print(
+          '✅ Loaded ${workouts.length} workouts for ${date.toString().split(' ')[0]}');
+
       // Ensure day data exists
       if (!_dayDataMap.containsKey(dateStr)) {
         _dayDataMap[dateStr] = DayActivityData(
@@ -199,18 +202,17 @@ class ActivityScreen extends StatefulWidget {
           activities: [],
         );
       }
-      
+
       // Calculate total calories from workouts
       final totalCalories = workouts.fold<int>(
         0,
         (sum, workout) => sum + ((workout['calories'] as int?) ?? 0),
       );
-      
+
       setState(() {
         _dayDataMap[dateStr]!.todayWorkouts = workouts;
         _dayDataMap[dateStr]!.caloriesBurned = totalCalories;
       });
-      
     } catch (e) {
       print('❌ Error loading workouts for date: $e');
     } finally {
@@ -220,9 +222,11 @@ class ActivityScreen extends StatefulWidget {
 
   void _initializeDummyData() {
     final today = _formatDate(DateTime.now());
-    final yesterday = _formatDate(DateTime.now().subtract(const Duration(days: 1)));
-    final dayBefore = _formatDate(DateTime.now().subtract(const Duration(days: 2)));
-    
+    final yesterday =
+        _formatDate(DateTime.now().subtract(const Duration(days: 1)));
+    final dayBefore =
+        _formatDate(DateTime.now().subtract(const Duration(days: 2)));
+
     _dayDataMap[today] = DayActivityData(
       caloriesBurned: 0, // Will be updated by Firestore data
       todayWorkouts: [], // Will be populated by Firestore
@@ -245,7 +249,7 @@ class ActivityScreen extends StatefulWidget {
         ),
       ],
     );
-    
+
     _dayDataMap[yesterday] = DayActivityData(
       caloriesBurned: 120,
       todayWorkouts: [],
@@ -260,7 +264,7 @@ class ActivityScreen extends StatefulWidget {
         ),
       ],
     );
-    
+
     _dayDataMap[dayBefore] = DayActivityData(
       caloriesBurned: 0,
       todayWorkouts: [],
@@ -327,18 +331,139 @@ class ActivityScreen extends StatefulWidget {
     setState(() {
       _selectedDate = _selectedDate.add(Duration(days: days));
     });
-    
+
     // ✅ Load workouts for the new date
     _loadWorkoutsForDate(_selectedDate);
-    
+
     _animationController.reset();
     _animationController.forward();
+  }
+
+  void _showCalorieGoalEditor() {
+    int tempGoal = _calorieGoal;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Calorie Goal',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (tempGoal > 100) {
+                        setModalState(() => tempGoal -= 10);
+                      }
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.remove, color: Colors.black87),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      '$tempGoal',
+                      style: GoogleFonts.poppins(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      if (tempGoal < 5000) {
+                        setModalState(() => tempGoal += 10);
+                      }
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add, color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _calorieGoal = tempGoal;
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFA2A55),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Done',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final currentData = _getCurrentDayData();
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
@@ -361,7 +486,6 @@ class ActivityScreen extends StatefulWidget {
                     child: _buildDateHeader(),
                   ),
                 ),
-                
                 SliverToBoxAdapter(
                   child: Container(
                     color: Colors.white,
@@ -376,7 +500,6 @@ class ActivityScreen extends StatefulWidget {
                     ),
                   ),
                 ),
-                
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,9 +521,8 @@ class ActivityScreen extends StatefulWidget {
   }
 
   Widget _buildDateHeader() {
-    final displayText = _isToday
-        ? 'Today'
-        : DateFormat('MMM d, yyyy').format(_selectedDate);
+    final displayText =
+        _isToday ? 'Today' : DateFormat('MMM d, yyyy').format(_selectedDate);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -431,7 +553,7 @@ class ActivityScreen extends StatefulWidget {
     );
   }
 
-    Widget _buildCalorieRing(int caloriesBurned) {
+  Widget _buildCalorieRing(int caloriesBurned) {
     final percentage = caloriesBurned / _calorieGoal;
     final displayPercentage = percentage.clamp(0.0, 1.0); // For ring display
     final isOverGoal = percentage > 1.0;
@@ -458,7 +580,7 @@ class ActivityScreen extends StatefulWidget {
               child: CircularProgressIndicator(
                 value: displayPercentage,
                 strokeWidth: 16,
-                color: isOverGoal 
+                color: isOverGoal
                     ? const Color(0xFF4CAF50) // Green when over goal
                     : const Color(0xFFE31E52), // Pink when under goal
                 strokeCap: StrokeCap.round,
@@ -483,6 +605,15 @@ class ActivityScreen extends StatefulWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w400,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _showCalorieGoalEditor,
+                      child: Icon(
+                        Icons.edit,
+                        size: 18,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -549,7 +680,7 @@ class ActivityScreen extends StatefulWidget {
     );
   }
 
-    Widget _buildTodayWorkouts(List<Map<String, dynamic>> localWorkouts) {
+  Widget _buildTodayWorkouts(List<Map<String, dynamic>> localWorkouts) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -573,20 +704,21 @@ class ActivityScreen extends StatefulWidget {
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE31E52)),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFFE31E52)),
                   ),
                 ),
               );
             }
-            
+
             if (_isRestDay) {
               return _buildRestDayCard();
             }
-            
+
             if (_todayWorkouts.isEmpty) {
               return _buildNoWorkoutCard();
             }
-            
+
             // ✅ Display real workouts from Firestore
             return Column(
               children: _todayWorkouts.map((workout) {
@@ -599,7 +731,9 @@ class ActivityScreen extends StatefulWidget {
         else if (localWorkouts.isEmpty)
           _buildNoWorkoutCard()
         else
-          ...localWorkouts.map((workout) => _buildWorkoutCard(workout)).toList(),
+          ...localWorkouts
+              .map((workout) => _buildWorkoutCard(workout))
+              .toList(),
       ],
     );
   }
@@ -747,14 +881,14 @@ class ActivityScreen extends StatefulWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                      Text(
-                        '${workout['duration'] ?? 0} min | ${workout['calories'] ?? 0} kcal',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey[600],
-                        ),
+                    Text(
+                      '${workout['duration'] ?? 0} min | ${workout['calories'] ?? 0} kcal',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.grey[600],
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -769,7 +903,6 @@ class ActivityScreen extends StatefulWidget {
       ),
     );
   }
-
 
   // ✅ NEW: Build workout card from Firestore data
   Widget _buildFirestoreWorkoutCard(Map<String, dynamic> workout) {
@@ -812,7 +945,7 @@ class ActivityScreen extends StatefulWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      workout['day'] == 0 
+                      workout['day'] == 0
                           ? (workout['workoutTitle'] ?? 'Discovery Workout')
                           : 'Day ${workout['day']} Workout',
                       style: GoogleFonts.poppins(
@@ -872,37 +1005,38 @@ class ActivityScreen extends StatefulWidget {
   }
 
   Widget _buildActivities(List<ActivityItem> activities) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          'Activities',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Activities',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      // ✅ Show all activity cards (if any)
-      ...activities.map((activity) => _buildActivityCard(activity)).toList(),
-      // ✅ Always show "Add More Activity" button at the bottom (only once)
-      const SizedBox(height: 12),
-      _buildAddMoreActivityButton(),
-    ],
-  );
-}
+        const SizedBox(height: 16),
+        // ✅ Show all activity cards (if any)
+        ...activities.map((activity) => _buildActivityCard(activity)).toList(),
+        // ✅ Always show "Add More Activity" button at the bottom (only once)
+        const SizedBox(height: 12),
+        _buildAddMoreActivityButton(),
+      ],
+    );
+  }
 
   Widget _buildActivityCard(ActivityItem activity) {
     // ✅ Use fire icon for custom activities, otherwise use provided icon
-    final displayIcon = activity.isCustom ? Icons.local_fire_department : activity.icon;
-    
+    final displayIcon =
+        activity.isCustom ? Icons.local_fire_department : activity.icon;
+
     // Generate colors based on activity name
     final colors = _getActivityColors(activity.name);
-    
+
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       child: Container(
@@ -1058,8 +1192,9 @@ class ActivityItem {
 // ==================== ADD ACTIVITY BOTTOM SHEET ====================
 class AddActivitySheet extends StatefulWidget {
   final Function(ActivityItem) onActivityAdded;
-  
-  const AddActivitySheet({Key? key, required this.onActivityAdded}) : super(key: key);
+
+  const AddActivitySheet({Key? key, required this.onActivityAdded})
+      : super(key: key);
 
   @override
   State<AddActivitySheet> createState() => _AddActivitySheetState();
@@ -1067,13 +1202,37 @@ class AddActivitySheet extends StatefulWidget {
 
 class _AddActivitySheetState extends State<AddActivitySheet> {
   final List<Map<String, dynamic>> _allActivities = [
-    {'name': 'Indoor Walking', 'icon': Icons.directions_walk, 'category': 'Popular'},
-    {'name': 'Garden Walking', 'icon': Icons.directions_walk, 'category': 'Popular'},
-    {'name': 'Dog Walking', 'icon': Icons.directions_walk, 'category': 'Popular'},
-    {'name': 'Outdoor Running', 'icon': Icons.directions_run, 'category': 'Popular'},
-    {'name': 'House Working', 'icon': Icons.home_work_outlined, 'category': 'Popular'},
+    {
+      'name': 'Indoor Walking',
+      'icon': Icons.directions_walk,
+      'category': 'Popular'
+    },
+    {
+      'name': 'Garden Walking',
+      'icon': Icons.directions_walk,
+      'category': 'Popular'
+    },
+    {
+      'name': 'Dog Walking',
+      'icon': Icons.directions_walk,
+      'category': 'Popular'
+    },
+    {
+      'name': 'Outdoor Running',
+      'icon': Icons.directions_run,
+      'category': 'Popular'
+    },
+    {
+      'name': 'House Working',
+      'icon': Icons.home_work_outlined,
+      'category': 'Popular'
+    },
     {'name': 'Slow dancing', 'icon': Icons.music_note, 'category': 'Popular'},
-    {'name': 'Play with toddlers', 'icon': Icons.child_care, 'category': 'Popular'},
+    {
+      'name': 'Play with toddlers',
+      'icon': Icons.child_care,
+      'category': 'Popular'
+    },
     {'name': 'Aerobics', 'icon': Icons.fitness_center, 'category': 'A'},
     {'name': 'Archery', 'icon': Icons.sports, 'category': 'A'},
     {'name': 'Auto Repairing', 'icon': Icons.build, 'category': 'A'},
@@ -1098,7 +1257,11 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
     {'name': 'Weighting', 'icon': Icons.fitness_center, 'category': 'W'},
     {'name': 'Water Polo', 'icon': Icons.pool, 'category': 'W'},
     {'name': 'Water skiing', 'icon': Icons.water, 'category': 'W'},
-    {'name': 'Window Cleaning', 'icon': Icons.cleaning_services, 'category': 'W'},
+    {
+      'name': 'Window Cleaning',
+      'icon': Icons.cleaning_services,
+      'category': 'W'
+    },
     {'name': 'Wood Chopping', 'icon': Icons.carpenter, 'category': 'W'},
     {'name': 'Wrestling', 'icon': Icons.sports_martial_arts, 'category': 'W'},
     {'name': 'Yoga', 'icon': Icons.self_improvement, 'category': 'Y'},
@@ -1138,7 +1301,6 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
             ),
           ),
           const Divider(height: 1),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: InkWell(
@@ -1202,12 +1364,10 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
               ),
             ),
           ),
-          
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(height: 1),
           ),
-          
           Expanded(
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
@@ -1222,16 +1382,30 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
   }
 
   List<Widget> _buildCategoryList() {
-    final categories = <String>['Popular', 'A', 'B', 'C', 'D', 'E', 'F', 'T', 'V', 'W', 'Y'];
+    final categories = <String>[
+      'Popular',
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'T',
+      'V',
+      'W',
+      'Y'
+    ];
     final widgets = <Widget>[];
 
     for (final category in categories) {
-      final activities = _allActivities.where((a) => a['category'] == category).toList();
+      final activities =
+          _allActivities.where((a) => a['category'] == category).toList();
       if (activities.isEmpty) continue;
 
       widgets.add(
         Padding(
-          padding: EdgeInsets.fromLTRB(16, category == 'Popular' ? 8 : 16, 16, 8),
+          padding:
+              EdgeInsets.fromLTRB(16, category == 'Popular' ? 8 : 16, 16, 8),
           child: Text(
             category,
             style: GoogleFonts.poppins(
@@ -1301,11 +1475,13 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => CustomActivitySheet(onActivityAdded: widget.onActivityAdded),
+      builder: (context) =>
+          CustomActivitySheet(onActivityAdded: widget.onActivityAdded),
     );
   }
 
-  void _showActivityDetailSheet(BuildContext parentContext, Map<String, dynamic> activity) {
+  void _showActivityDetailSheet(
+      BuildContext parentContext, Map<String, dynamic> activity) {
     showModalBottomSheet(
       context: parentContext,
       isScrollControlled: true,
@@ -1323,8 +1499,9 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
 // ==================== CUSTOM ACTIVITY SHEET ====================
 class CustomActivitySheet extends StatefulWidget {
   final Function(ActivityItem) onActivityAdded;
-  
-  const CustomActivitySheet({Key? key, required this.onActivityAdded}) : super(key: key);
+
+  const CustomActivitySheet({Key? key, required this.onActivityAdded})
+      : super(key: key);
 
   @override
   State<CustomActivitySheet> createState() => _CustomActivitySheetState();
@@ -1332,7 +1509,8 @@ class CustomActivitySheet extends StatefulWidget {
 
 class _CustomActivitySheetState extends State<CustomActivitySheet> {
   DateTime _selectedDate = DateTime.now();
-  final TextEditingController _durationController = TextEditingController(text: '30');
+  final TextEditingController _durationController =
+      TextEditingController(text: '30');
   final TextEditingController _descriptionController = TextEditingController();
   final FocusNode _durationFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
@@ -1390,7 +1568,6 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
               ),
             ),
             const Divider(height: 1),
-            
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -1429,14 +1606,13 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE31E52), width: 2),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE31E52), width: 2),
                         ),
                       ),
                       style: GoogleFonts.poppins(fontSize: 14),
                     ),
-                    
                     const SizedBox(height: 24),
-                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1488,7 +1664,7 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                           setState(() {
                             _selectedDate = picked;
                           });
-                        // Date changed - parent will reload on return
+                          // Date changed - parent will reload on return
                         }
                       },
                       borderRadius: BorderRadius.circular(12),
@@ -1510,14 +1686,13 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                                 color: Colors.black,
                               ),
                             ),
-                            Icon(Icons.calendar_today, color: Colors.grey[600], size: 20),
+                            Icon(Icons.calendar_today,
+                                color: Colors.grey[600], size: 20),
                           ],
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 24),
-                    
                     Text(
                       'Duration (minutes)',
                       style: GoogleFonts.poppins(
@@ -1556,7 +1731,8 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE31E52), width: 2),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE31E52), width: 2),
                         ),
                       ),
                       style: GoogleFonts.poppins(
@@ -1568,7 +1744,6 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                 ),
               ),
             ),
-            
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -1585,10 +1760,11 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                       );
                       return;
                     }
-                    
-                    final duration = int.tryParse(_durationController.text) ?? 30;
+
+                    final duration =
+                        int.tryParse(_durationController.text) ?? 30;
                     final calories = (duration * 2);
-                    
+
                     // ✅ Mark as custom activity
                     final activity = ActivityItem(
                       name: _descriptionController.text.trim(),
@@ -1598,15 +1774,16 @@ class _CustomActivitySheetState extends State<CustomActivitySheet> {
                       date: _selectedDate,
                       isCustom: true, // ✅ This is a custom activity
                     );
-                    
+
                     widget.onActivityAdded(activity);
-                    
+
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Custom activity added! AI will process it soon.'),
+                        content: Text(
+                            'Custom activity added! AI will process it soon.'),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -1653,7 +1830,8 @@ class ActivityDetailSheet extends StatefulWidget {
 
 class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
   DateTime _selectedDate = DateTime.now();
-  final TextEditingController _durationController = TextEditingController(text: '30');
+  final TextEditingController _durationController =
+      TextEditingController(text: '30');
   final FocusNode _durationFocusNode = FocusNode();
 
   @override
@@ -1707,7 +1885,6 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
               ),
             ),
             const Divider(height: 1),
-            
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -1766,7 +1943,7 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                           setState(() {
                             _selectedDate = picked;
                           });
-                        // Date changed - parent will reload on return
+                          // Date changed - parent will reload on return
                         }
                       },
                       borderRadius: BorderRadius.circular(12),
@@ -1788,14 +1965,13 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                                 color: Colors.black,
                               ),
                             ),
-                            Icon(Icons.calendar_today, color: Colors.grey[600], size: 20),
+                            Icon(Icons.calendar_today,
+                                color: Colors.grey[600], size: 20),
                           ],
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 24),
-                    
                     Text(
                       'Duration',
                       style: GoogleFonts.poppins(
@@ -1834,7 +2010,8 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE31E52), width: 2),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE31E52), width: 2),
                         ),
                       ),
                       style: GoogleFonts.poppins(
@@ -1846,7 +2023,6 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                 ),
               ),
             ),
-            
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -1854,9 +2030,10 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    final duration = int.tryParse(_durationController.text) ?? 30;
+                    final duration =
+                        int.tryParse(_durationController.text) ?? 30;
                     final calories = (duration * 2);
-                    
+
                     // ✅ Regular activity (not custom)
                     final activity = ActivityItem(
                       name: widget.activity['name'],
@@ -1866,12 +2043,12 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
                       date: _selectedDate,
                       isCustom: false, // ✅ Not a custom activity
                     );
-                    
+
                     widget.onActivityAdded(activity);
-                    
+
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('${widget.activity['name']} added!'),
