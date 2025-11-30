@@ -4,35 +4,36 @@ class DiscoveryData {
     {
       'name': 'Butt',
       'workoutCount': 10,
-      'image': 'assets/images/body_butt.png',
-      'heroImage': 'assets/images/body_butt_hero.png',
+      'image': 'assets/images/discovery_body_2.jpeg', // ✅ Butt image
+      'heroImage': 'assets/images/discovery_body_2.jpeg',
     },
     {
       'name': 'Leg',
       'workoutCount': 16,
-      'image': 'assets/images/body_leg.png',
-      'heroImage': 'assets/images/body_leg_hero.png',
+      'image': 'assets/images/discovery_body_1.jpeg', // ✅ Alternating
+      'heroImage': 'assets/images/discovery_body_1.jpeg',
     },
     {
       'name': 'Abs',
       'workoutCount': 14,
-      'image': 'assets/images/body_abs.png',
-      'heroImage': 'assets/images/body_abs_hero.png',
+      'image': 'assets/images/discovery_body_1.jpeg', // ✅ Abs image
+      'heroImage': 'assets/images/discovery_body_1.jpeg',
     },
     {
       'name': 'Chest',
       'workoutCount': 5,
-      'image': 'assets/images/body_chest.png',
-      'heroImage': 'assets/images/body_chest_hero.png',
+      'image': 'assets/images/discovery_body_2.jpeg', // ✅ Alternating
+      'heroImage': 'assets/images/discovery_body_2.jpeg',
     },
     {
       'name': 'Arms',
       'workoutCount': 12,
-      'image': 'assets/images/body_arms.png',
-      'heroImage': 'assets/images/body_arms_hero.png',
+      'image': 'assets/images/discovery_body_1.jpeg', // ✅ Alternating
+      'heroImage': 'assets/images/discovery_body_1.jpeg',
     },
   ];
 
+  // Breast Cancer Awareness Month
   // Breast Cancer Awareness Month
   static final List<Map<String, dynamic>> breastCancerWorkouts = [
     {
@@ -41,7 +42,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 33,
       'isVip': false,
-      'image': 'assets/images/cardio_dance.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -51,7 +52,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 208,
       'isVip': false,
-      'image': 'assets/images/full_body_tone.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -61,7 +62,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 156,
       'isVip': false,
-      'image': 'assets/images/strength_grace.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅
       'equipment': 'Dumbbells',
       'focusZones': 'FullBody',
     },
@@ -71,7 +72,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 98,
       'isVip': false,
-      'image': 'assets/images/pink_power.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -81,7 +82,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 220,
       'isVip': true,
-      'image': 'assets/images/hope_health.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -91,7 +92,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 267,
       'isVip': false,
-      'image': 'assets/images/survivor_strong.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅
       'equipment': 'Resistance Band',
       'focusZones': 'FullBody',
     },
@@ -105,7 +106,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 126,
       'isVip': false,
-      'image': 'assets/images/gentle_cardio.png',
+      'image': 'assets/images/knee_friendly_1.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -115,7 +116,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 36,
       'isVip': false,
-      'image': 'assets/images/leg_sculpt.png',
+      'image': 'assets/images/knee_friendly_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'Lower Body',
     },
@@ -125,7 +126,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 145,
       'isVip': false,
-      'image': 'assets/images/low_impact_power.png',
+      'image': 'assets/images/knee_friendly_3.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -135,7 +136,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 89,
       'isVip': false,
-      'image': 'assets/images/seated_sculpt.png',
+      'image': 'assets/images/knee_friendly_1.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'FullBody',
     },
@@ -145,7 +146,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 112,
       'isVip': false,
-      'image': 'assets/images/safe_strong.png',
+      'image': 'assets/images/knee_friendly_2.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -155,7 +156,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 67,
       'isVip': true,
-      'image': 'assets/images/knee_relief.png',
+      'image': 'assets/images/knee_friendly_3.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'Lower Body',
     },
@@ -169,7 +170,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 184,
       'isVip': false,
-      'image': 'assets/images/core_awakening.png',
+      'image': 'assets/images/belly_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'Core',
     },
@@ -179,7 +180,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 84,
       'isVip': false,
-      'image': 'assets/images/flat_abs.png',
+      'image': 'assets/images/belly_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'Abs',
     },
@@ -189,7 +190,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 156,
       'isVip': false,
-      'image': 'assets/images/belly_burner.png',
+      'image': 'assets/images/belly_3.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'Core',
     },
@@ -199,7 +200,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 198,
       'isVip': true,
-      'image': 'assets/images/abs_revolution.png',
+      'image': 'assets/images/belly_1.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'Core',
     },
@@ -209,7 +210,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 124,
       'isVip': false,
-      'image': 'assets/images/waist_sculptor.png',
+      'image': 'assets/images/belly_2.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'Obliques',
     },
@@ -219,7 +220,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 92,
       'isVip': false,
-      'image': 'assets/images/tummy_toner.png',
+      'image': 'assets/images/belly_3.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'Abs',
     },
@@ -233,7 +234,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 111,
       'isVip': false,
-      'image': 'assets/images/leg_power_boost.png',
+      'image': 'assets/images/plus_size_1.jpeg', // ✅
       'equipment': 'Chair',
       'focusZones': 'Lower Body',
     },
@@ -243,7 +244,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 129,
       'isVip': false,
-      'image': 'assets/images/strong_back.png',
+      'image': 'assets/images/plus_size_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'Back',
     },
@@ -253,7 +254,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 167,
       'isVip': false,
-      'image': 'assets/images/confident_curves.png',
+      'image': 'assets/images/plus_size_3.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -263,7 +264,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 189,
       'isVip': false,
-      'image': 'assets/images/body_positive.png',
+      'image': 'assets/images/plus_size_1.jpeg', // ✅ Repeat
       'equipment': 'Dumbbells',
       'focusZones': 'FullBody',
     },
@@ -273,7 +274,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 145,
       'isVip': false,
-      'image': 'assets/images/gentle_giant.png',
+      'image': 'assets/images/plus_size_2.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -283,7 +284,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 123,
       'isVip': true,
-      'image': 'assets/images/empower_strengthen.png',
+      'image': 'assets/images/plus_size_3.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'FullBody',
     },
@@ -297,7 +298,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 76,
       'isVip': false,
-      'image': 'assets/images/core_awakening_beginner.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'Core',
     },
@@ -307,7 +308,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 86,
       'isVip': false,
-      'image': 'assets/images/sculpt_sleep.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -317,7 +318,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 112,
       'isVip': false,
-      'image': 'assets/images/morning_energy.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -327,7 +328,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 156,
       'isVip': false,
-      'image': 'assets/images/wellness_warrior.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -337,7 +338,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 134,
       'isVip': true,
-      'image': 'assets/images/healthy_habits.png',
+      'image': 'assets/images/healthy_1.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -347,7 +348,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 145,
       'isVip': false,
-      'image': 'assets/images/vitality_boost.png',
+      'image': 'assets/images/healthy_2.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -361,7 +362,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 10,
       'isVip': false,
-      'image': 'assets/images/wall_power.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Wall',
       'focusZones': 'FullBody',
     },
@@ -371,7 +372,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 7,
       'isVip': false,
-      'image': 'assets/images/stretch_renewal.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -381,7 +382,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 45,
       'isVip': false,
-      'image': 'assets/images/yoga_flow.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -391,7 +392,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 56,
       'isVip': false,
-      'image': 'assets/images/flexibility_master.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -401,7 +402,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 28,
       'isVip': false,
-      'image': 'assets/images/gentle_stretch.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -411,7 +412,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 38,
       'isVip': true,
-      'image': 'assets/images/balance_stretch.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -425,7 +426,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 94,
       'isVip': false,
-      'image': 'assets/images/lean_lovely.png',
+      'image': 'assets/images/seat_1.jpeg', // ✅
       'equipment': 'Chair',
       'focusZones': 'Lower Body',
     },
@@ -435,7 +436,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 98,
       'isVip': false,
-      'image': 'assets/images/sit_sculpt.png',
+      'image': 'assets/images/seat_2.jpeg', // ✅
       'equipment': 'Chair',
       'focusZones': 'FullBody',
     },
@@ -445,7 +446,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 56,
       'isVip': false,
-      'image': 'assets/images/office_workout.png',
+      'image': 'assets/images/seat_1.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'FullBody',
     },
@@ -455,7 +456,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 89,
       'isVip': false,
-      'image': 'assets/images/chair_cardio.png',
+      'image': 'assets/images/seat_2.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'FullBody',
     },
@@ -465,7 +466,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 67,
       'isVip': false,
-      'image': 'assets/images/sitting_strong.png',
+      'image': 'assets/images/seat_1.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'Core',
     },
@@ -475,7 +476,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 45,
       'isVip': false,
-      'image': 'assets/images/desk_warrior.png',
+      'image': 'assets/images/seat_2.jpeg', // ✅ Repeat
       'equipment': 'Chair',
       'focusZones': 'Upper Body',
     },
@@ -489,7 +490,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 77,
       'isVip': false,
-      'image': 'assets/images/happy_knees.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'Lower Body',
     },
@@ -499,7 +500,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 99,
       'isVip': false,
-      'image': 'assets/images/strong_ankles.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'Lower Body',
     },
@@ -509,7 +510,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 112,
       'isVip': false,
-      'image': 'assets/images/recovery_flow.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -519,7 +520,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 134,
       'isVip': true,
-      'image': 'assets/images/renewal_yoga.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -529,7 +530,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 67,
       'isVip': false,
-      'image': 'assets/images/joint_care.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -539,7 +540,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 89,
       'isVip': false,
-      'image': 'assets/images/restore_recharge.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -553,7 +554,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 20,
       'isVip': false,
-      'image': 'assets/images/fresh_face.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -563,7 +564,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 19,
       'isVip': true,
-      'image': 'assets/images/relax_forehead.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -573,7 +574,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 34,
       'isVip': false,
-      'image': 'assets/images/meditation_flow.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -583,7 +584,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 28,
       'isVip': false,
-      'image': 'assets/images/stress_relief.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -593,7 +594,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 45,
       'isVip': false,
-      'image': 'assets/images/inner_peace.png',
+      'image': 'assets/images/strengthen_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -603,7 +604,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 38,
       'isVip': true,
-      'image': 'assets/images/zen_zone.png',
+      'image': 'assets/images/strengthen_2.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -621,7 +622,7 @@ class DiscoveryData {
           'title': 'Rhythm and Recharge',
           'duration': 4,
           'calories': 32,
-          'image': 'assets/images/dance_rhythm.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -629,7 +630,7 @@ class DiscoveryData {
           'title': 'Maximum Fit Challenge',
           'duration': 5,
           'calories': 42,
-          'image': 'assets/images/dance_maximum.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -637,7 +638,7 @@ class DiscoveryData {
           'title': 'Energy & Excellence',
           'duration': 5,
           'calories': 45,
-          'image': 'assets/images/dance_energy.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -645,7 +646,7 @@ class DiscoveryData {
           'title': 'Rhythm and Recharge',
           'duration': 4,
           'calories': 32,
-          'image': 'assets/images/dance_rhythm.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -653,7 +654,7 @@ class DiscoveryData {
           'title': 'Maximum Fit Challenge',
           'duration': 5,
           'calories': 42,
-          'image': 'assets/images/dance_maximum.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -661,7 +662,7 @@ class DiscoveryData {
           'title': 'Energy & Excellence',
           'duration': 5,
           'calories': 45,
-          'image': 'assets/images/dance_energy.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -677,7 +678,7 @@ class DiscoveryData {
           'title': 'Cardio Blast',
           'duration': 6,
           'calories': 54,
-          'image': 'assets/images/dance_cardio.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -685,7 +686,7 @@ class DiscoveryData {
           'title': 'Dance Fusion',
           'duration': 7,
           'calories': 63,
-          'image': 'assets/images/dance_fusion.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -693,7 +694,7 @@ class DiscoveryData {
           'title': 'Party Power',
           'duration': 5,
           'calories': 47,
-          'image': 'assets/images/dance_party.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -701,7 +702,7 @@ class DiscoveryData {
           'title': 'Cardio Blast',
           'duration': 6,
           'calories': 54,
-          'image': 'assets/images/dance_cardio.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -709,7 +710,7 @@ class DiscoveryData {
           'title': 'Dance Fusion',
           'duration': 7,
           'calories': 63,
-          'image': 'assets/images/dance_fusion.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -717,7 +718,7 @@ class DiscoveryData {
           'title': 'Party Power',
           'duration': 5,
           'calories': 47,
-          'image': 'assets/images/dance_party.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -733,7 +734,7 @@ class DiscoveryData {
           'title': 'Latin Heat',
           'duration': 8,
           'calories': 72,
-          'image': 'assets/images/dance_latin.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -741,7 +742,7 @@ class DiscoveryData {
           'title': 'Hip Hop Flow',
           'duration': 6,
           'calories': 56,
-          'image': 'assets/images/dance_hiphop.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -749,7 +750,7 @@ class DiscoveryData {
           'title': 'Zumba Zone',
           'duration': 10,
           'calories': 89,
-          'image': 'assets/images/dance_zumba.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -757,7 +758,7 @@ class DiscoveryData {
           'title': 'Latin Heat',
           'duration': 8,
           'calories': 72,
-          'image': 'assets/images/dance_latin.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -765,7 +766,7 @@ class DiscoveryData {
           'title': 'Hip Hop Flow',
           'duration': 6,
           'calories': 56,
-          'image': 'assets/images/dance_hiphop.png',
+          'image': 'assets/images/dance_card_1.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -773,7 +774,7 @@ class DiscoveryData {
           'title': 'Zumba Zone',
           'duration': 10,
           'calories': 89,
-          'image': 'assets/images/dance_zumba.png',
+          'image': 'assets/images/dance_card_2.jpeg', // ✅
           'equipment': 'None',
           'focusZones': 'FullBody',
         },
@@ -789,7 +790,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 220,
       'isVip': false,
-      'image': 'assets/images/sweat_burn.png',
+      'image': 'assets/images/lose_weight_1.jpeg', // ✅
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -799,7 +800,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 173,
       'isVip': false,
-      'image': 'assets/images/beginner_starter.png',
+      'image': 'assets/images/lose_weight_2.jpeg', // ✅
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -809,7 +810,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 245,
       'isVip': false,
-      'image': 'assets/images/fat_burner.png',
+      'image': 'assets/images/lose_weight_1.jpeg', // ✅ Repeat
       'equipment': 'None',
       'focusZones': 'FullBody',
     },
@@ -819,7 +820,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 198,
       'isVip': true,
-      'image': 'assets/images/metabolism_boost.png',
+      'image': 'assets/images/lose_weight_2.jpeg', // ✅ Repeat
       'equipment': 'Yoga Mat',
       'focusZones': 'FullBody',
     },
@@ -829,7 +830,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 289,
       'isVip': false,
-      'image': 'assets/images/weight_loss_warrior.png',
+      'image': 'assets/images/lose_weight_1.jpeg', // ✅ Repeat
       'equipment': 'Resistance Band',
       'focusZones': 'FullBody',
     },
@@ -839,7 +840,7 @@ class DiscoveryData {
       'type': 'FullBody',
       'calories': 267,
       'isVip': false,
-      'image': 'assets/images/slim_down.png',
+      'image': 'assets/images/lose_weight_2.jpeg', // ✅ Repeat
       'equipment': 'Dumbbells',
       'focusZones': 'FullBody',
     },

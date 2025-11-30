@@ -41,5 +41,53 @@ flutter:
   uses-material-design: true
 
   assets:
+    # Onboarding images
     - assets/images/onboarding/
+    
+    # Audio files
     - assets/audio/
+    
+    # Day card images (My Plan screen)
+    - assets/images/day_1.jpeg
+    - assets/images/day_2.jpeg
+    - assets/images/day_3.jpeg
+    - assets/images/day_4.jpeg
+    
+    # Body specific circle images (Discovery)
+    - assets/images/discovery_body_1.jpeg
+    - assets/images/discovery_body_2.jpeg
+    
+    # Knee Friendly workout images
+    - assets/images/knee_friendly_1.jpeg
+    - assets/images/knee_friendly_2.jpeg
+    - assets/images/knee_friendly_3.jpeg
+    
+    # Belly workout images
+    - assets/images/belly_1.jpeg
+    - assets/images/belly_2.jpeg
+    - assets/images/belly_3.jpeg
+    
+    # Plus Size workout images
+    - assets/images/plus_size_1.jpeg
+    - assets/images/plus_size_2.jpeg
+    - assets/images/plus_size_3.jpeg
+    
+    # Healthy/Wellness workout images
+    - assets/images/healthy_1.jpeg
+    - assets/images/healthy_2.jpeg
+    
+    # Strengthen & Stretch workout images
+    - assets/images/strengthen_1.jpeg
+    - assets/images/strengthen_2.jpeg
+    
+    # Seat/Chair workout images
+    - assets/images/seat_1.jpeg
+    - assets/images/seat_2.jpeg
+    
+    # Lose Weight workout images
+    - assets/images/lose_weight_1.jpeg
+    - assets/images/lose_weight_2.jpeg
+    
+    # Dance card images (small workout cards)
+    - assets/images/dance_card_1.jpeg
+    - assets/images/dance_card_2.jpeg

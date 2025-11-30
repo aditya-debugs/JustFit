@@ -496,7 +496,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   }
 
   // ========== DAY CARD ==========
-  Widget _buildDayCard({
+Widget _buildDayCard({
   required WorkoutPlanModel plan,
   required DayPlanModel day,
   bool showStartButton = false,
@@ -608,15 +608,24 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
                                 child: Container(
                                   width: 60,
                                   height: 60,
-                                  color: isCompleted
-                                      ? const Color(0xFFFCE4EC)
-                                      : Colors.grey[200], // Same grey for all
-                                  child: Icon(
-                                    Icons.fitness_center, // Same icon for all
-                                    color: isCompleted
-                                        ? const Color(0xFFE91E63)
-                                        : Colors.grey[400], // Same grey for all
-                                    size: 30,
+                                  color: Colors.grey[200],
+                                  child: Image.asset(
+                                    _getDayImage(day.dayNumber),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: isCompleted
+                                            ? const Color(0xFFFCE4EC)
+                                            : Colors.grey[200],
+                                        child: Icon(
+                                          Icons.fitness_center,
+                                          color: isCompleted
+                                              ? const Color(0xFFE91E63)
+                                              : Colors.grey[400],
+                                          size: 30,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               ),
@@ -698,6 +707,17 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
       ],
     ),
   );
+}
+
+  // Helper to rotate through 4 day images
+String _getDayImage(int dayNumber) {
+  final images = [
+    'assets/images/day_1.jpeg',
+    'assets/images/day_2.jpeg',
+    'assets/images/day_3.jpeg',
+    'assets/images/day_4.jpeg',
+  ];
+  return images[(dayNumber - 1) % 4];
 }
 
   /// ✅ Show dialog when user tries to access locked day
@@ -861,6 +881,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
       dayNumber: day.dayNumber,
       duration: day.estimatedDuration,
       calories: calories,
+      heroImagePath: _getDayImage(day.dayNumber),
       workoutSets: _convertToWorkoutSets(day.workoutSets),
       workoutSetsData: day.workoutSets,
       intensity: day.intensity,
