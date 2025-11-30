@@ -258,49 +258,56 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header
-            SliverToBoxAdapter(
-              child: _buildHeader(),
-            ),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await _loadProgressData();
+            setState(() {});
+          },
+          color: const Color(0xFFE91E63),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: _buildHeader(),
+              ),
 
-            // Profile Section
-            SliverToBoxAdapter(
-              child: _buildProfileSection(),
-            ),
+              // Profile Section
+              SliverToBoxAdapter(
+                child: _buildProfileSection(),
+              ),
 
-            // Achievement Section
-            SliverToBoxAdapter(
-              child: _buildAchievementSection(),
-            ),
+              // Achievement Section
+              SliverToBoxAdapter(
+                child: _buildAchievementSection(),
+              ),
 
-            // Weight Section
-            SliverToBoxAdapter(
-              child: _buildWeightSection(),
-            ),
+              // Weight Section
+              SliverToBoxAdapter(
+                child: _buildWeightSection(),
+              ),
 
-            // Monthly Achievement Calendar
-            SliverToBoxAdapter(
-              child: _buildMonthlyAchievementSection(),
-            ),
+              // Monthly Achievement Calendar
+              SliverToBoxAdapter(
+                child: _buildMonthlyAchievementSection(),
+              ),
 
-            // Workout Duration Section
-            SliverToBoxAdapter(
-              child: _buildWorkoutDurationSection(),
-            ),
+              // Workout Duration Section
+              SliverToBoxAdapter(
+                child: _buildWorkoutDurationSection(),
+              ),
 
-            // Calories Burned Section
-            SliverToBoxAdapter(
-              child: _buildCaloriesBurnedSection(),
-            ),
+              // Calories Burned Section
+              SliverToBoxAdapter(
+                child: _buildCaloriesBurnedSection(),
+              ),
 
-            // Bottom padding
-            SliverToBoxAdapter(
-              child: const SizedBox(height: 100),
-            ),
-          ],
+              // Bottom padding
+              SliverToBoxAdapter(
+                child: const SizedBox(height: 100),
+              ),
+            ],
+          ),
         ),
       ),
     );

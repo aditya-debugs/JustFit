@@ -210,7 +210,6 @@ class _AchievementScreenState extends State<AchievementScreen>
         child: Stack(
           children: [
             _buildSpotlight(),
-
             Positioned.fill(
               child: CustomPaint(
                 painter: ConfettiPainter(
@@ -219,7 +218,6 @@ class _AchievementScreenState extends State<AchievementScreen>
                 ),
               ),
             ),
-
             SafeArea(
               child: Column(
                 children: [
@@ -296,7 +294,8 @@ class _AchievementScreenState extends State<AchievementScreen>
                       AnimatedBuilder(
                         animation: _floatingController,
                         builder: (context, child) {
-                          final glowSize = 280 + (_floatingAnimation.value.abs() * 2);
+                          final glowSize =
+                              280 + (_floatingAnimation.value.abs() * 2);
                           return Container(
                             width: glowSize,
                             height: glowSize,
@@ -304,7 +303,8 @@ class _AchievementScreenState extends State<AchievementScreen>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: widget.achievement.badgeStyle.primaryColor
+                                  color: widget
+                                      .achievement.badgeStyle.primaryColor
                                       .withOpacity(0.3),
                                   blurRadius: 40,
                                   spreadRadius: 10,
@@ -314,15 +314,16 @@ class _AchievementScreenState extends State<AchievementScreen>
                           );
                         },
                       ),
-                    
                     Container(
                       width: 260,
                       height: 260,
                       child: CustomPaint(
                         painter: ColorfulBadgePainter(
                           number: widget.achievement.badgeNumber,
-                          primaryColor: widget.achievement.badgeStyle.primaryColor,
-                          accentColor: widget.achievement.badgeStyle.accentColor,
+                          primaryColor:
+                              widget.achievement.badgeStyle.primaryColor,
+                          accentColor:
+                              widget.achievement.badgeStyle.accentColor,
                         ),
                       ),
                     ),
@@ -405,15 +406,27 @@ class _AchievementScreenState extends State<AchievementScreen>
               widget.onContinue!();
             } else {
               final controller = Get.find<WorkoutPlanController>();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => StreakScreen(
-                    currentStreak: controller.userStreak.value,
-                    weeklyProgress: controller.weeklyProgress.toList(),
+
+              // If streak is 0, skip streak screen and go directly to Activity tab
+              if (controller.userStreak.value == 0) {
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const MainScreen(initialIndex: 1),
                   ),
-                ),
-              );
+                  (route) => false,
+                );
+              } else {
+                // Show streak screen if user has a streak
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StreakScreen(
+                      currentStreak: controller.userStreak.value,
+                      weeklyProgress: controller.weeklyProgress.toList(),
+                    ),
+                  ),
+                );
+              }
             }
           },
           style: ElevatedButton.styleFrom(
@@ -485,12 +498,12 @@ class ConfettiPainter extends CustomPainter {
     for (final particle in particles) {
       final x = size.width * particle.x;
       final y = size.height * particle.currentY;
-      
+
       double opacity = 1.0;
       if (particle.currentY > 0.7) {
         opacity = 1.0 - ((particle.currentY - 0.7) / 0.5).clamp(0.0, 1.0);
       }
-      
+
       if (opacity <= 0.0) continue;
       if (y > size.height * 1.5) continue;
 

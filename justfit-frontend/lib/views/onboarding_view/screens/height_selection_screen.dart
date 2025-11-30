@@ -1,9 +1,11 @@
 // lib/views/onboarding_view/screens/height_selection_screen.dart
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/onboarding_layout.dart';
-import '../../../controllers/onboarding_controller.dart'; // ← ADDED
+import '../../../controllers/onboarding_controller.dart';
 
 class HeightSelectionScreen extends StatefulWidget {
   final String partTitle;
@@ -33,63 +35,69 @@ class HeightSelectionScreen extends StatefulWidget {
 
 class _HeightSelectionScreenState extends State<HeightSelectionScreen>
     with SingleTickerProviderStateMixin {
-  // ✅ ADDED CONTROLLER
+  // get controller from GetX
   final OnboardingController _controller = Get.find<OnboardingController>();
-  
-  bool _isCm = false; // false = ft, true = cm
+
+  // Unit: false -> ft/in, true -> cm
+  bool _isCm = false;
+
   late FixedExtentScrollController _scrollController;
-  
-  // Height values
+
+  // selected values
   int _selectedFeet = 5;
   int _selectedInches = 5;
   double _selectedCm = 165.1;
-  
-  // Ranges
+
+  // ranges
   final int _minFeet = 3;
   final int _maxFeet = 8;
   final double _minCm = 100.0;
   final double _maxCm = 250.0;
   final double _cmStep = 0.1;
-  
+
+  // animation controllers for screen transition
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // convenience getters for item counts
+  int get _cmItemCount =>
+      ((_maxCm - _minCm) / _cmStep).round() + 1; // inclusive endpoints
+
+  int get _ftInchItemCount => (_maxFeet - _minFeet + 1) * 12;
+
   @override
   void initState() {
     super.initState();
-    
-    // ✅ LOAD SAVED HEIGHT FROM CONTROLLER
-    double savedHeight = _controller.height.value;
-    if (savedHeight > 0) {
-      if (_isCm) {
-        _selectedCm = savedHeight;
-      } else {
-        // Convert cm to ft/in
-        double totalInches = savedHeight / 2.54;
-        _selectedFeet = totalInches ~/ 12;
-        _selectedInches = (totalInches % 12).round();
-      }
+
+    // load saved height from onboarding controller (assume value in cm)
+    double saved = _controller.height.value;
+    if (saved > 0) {
+      // by default _isCm is false; but we set both selected values so toggle works fine
+      _selectedCm = saved;
+      final double totalInches = saved / 2.54;
+      _selectedFeet = totalInches ~/ 12;
+      _selectedInches = (totalInches % 12).round();
+      // normalize within ranges
+      _selectedFeet = _selectedFeet.clamp(_minFeet, _maxFeet);
+      _selectedInches = _selectedInches.clamp(0, 11);
     }
-    
-    // Initialize scroll controller
-    _scrollController = FixedExtentScrollController(
-      initialItem: _isCm ? _cmToIndex(_selectedCm) : (_selectedFeet - _minFeet) * 12 + _selectedInches,
-    );
-    
+
+    // initialize scroll controller according to initial unit (ft/in)
+    final int initialIndex = _isCm
+        ? _cmToIndex(_selectedCm)
+        : (_selectedFeet - _minFeet) * 12 + _selectedInches;
+    _scrollController = FixedExtentScrollController(initialItem: initialIndex);
+
+    // animations
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
       vsync: this,
+      duration: const Duration(milliseconds: 600),
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
+    _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeIn,
-    ));
-    
+    ).drive(Tween(begin: 0.0, end: 1.0));
     _slideAnimation = Tween<Offset>(
       begin: const Offset(1.0, 0.0),
       end: Offset.zero,
@@ -97,80 +105,96 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
       parent: _fadeController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _fadeController.forward();
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _fadeController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
+  // Helpers to convert between cm and index
   int _cmToIndex(double cm) {
-    return ((cm - _minCm) / _cmStep).round();
+    final int idx = ((cm - _minCm) / _cmStep).round();
+    return idx.clamp(0, _cmItemCount - 1);
   }
 
   double _indexToCm(int index) {
-    return _minCm + (index * _cmStep);
+    return (_minCm + index * _cmStep);
   }
 
+  // toggle unit and keep selected visible
   void _toggleUnit() {
-  setState(() {
-    if (_isCm) {
-      // Convert cm to ft/in
-      double totalInches = _selectedCm / 2.54;
-      _selectedFeet = totalInches ~/ 12;
-      _selectedInches = (totalInches % 12).round();
-      
-      int newIndex = (_selectedFeet - _minFeet) * 12 + _selectedInches;
-      _scrollController.dispose();
-      _scrollController = FixedExtentScrollController(
-        initialItem: newIndex,
-      );
-      _isCm = !_isCm;
-      
-      // Force rebuild after state change
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _scrollController.jumpToItem(newIndex);
-        }
-      });
-    } else {
-      // Convert ft/in to cm
-      _selectedCm = ((_selectedFeet * 12 + _selectedInches) * 2.54);
-      
-      int newIndex = _cmToIndex(_selectedCm);
-      _scrollController.dispose();
-      _scrollController = FixedExtentScrollController(
-        initialItem: newIndex,
-      );
-      _isCm = !_isCm;
-      
-      // Force rebuild after state change
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _scrollController.jumpToItem(newIndex);
-        }
-      });
-    }
-  });
-}
+    final bool targetIsCm = !_isCm;
 
+    // current selected height in cm (always derive accurate value)
+    final double currentCm =
+        _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+
+    // compute new index for target unit
+    int newIndex;
+    if (targetIsCm) {
+      newIndex = _cmToIndex(currentCm);
+    } else {
+      // convert cm to total inches index for ft/in wheel
+      final int totalInches = (currentCm / 2.54).round();
+      final int ftIndex = (totalInches ~/ 12) - _minFeet;
+      final int inchesIndex = totalInches % 12;
+      newIndex = (ftIndex * 12 + inchesIndex).clamp(0, _ftInchItemCount - 1);
+    }
+
+    // dispose and replace controller safely
+    _scrollController.dispose();
+    _scrollController = FixedExtentScrollController(initialItem: newIndex);
+
+    // flip unit state and update selected values based on the new index
+    setState(() {
+      _isCm = targetIsCm;
+      if (_isCm) {
+        _selectedCm = _indexToCm(newIndex);
+      } else {
+        int totalInches = newIndex;
+        _selectedFeet = _minFeet + (totalInches ~/ 12);
+        _selectedInches = totalInches % 12;
+      }
+    });
+
+    // save converted height into controller
+    final double heightInCm =
+        _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+    _controller.setHeight(heightInCm);
+
+    // ensure wheel shows the selected item after rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        try {
+          _scrollController.jumpToItem(newIndex);
+        } catch (_) {
+          // ignore if controller not attached yet
+        }
+      }
+    });
+  }
+
+  // when wheel selection changes
   void _onHeightChanged(int index) {
     setState(() {
       if (_isCm) {
         _selectedCm = _indexToCm(index);
       } else {
-        int totalInches = index;
+        final int totalInches = index;
         _selectedFeet = _minFeet + (totalInches ~/ 12);
         _selectedInches = totalInches % 12;
       }
     });
-    
-    // ✅ SAVE TO CONTROLLER IMMEDIATELY
-    double heightInCm = _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+
+    final double heightInCm =
+        _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+
+    // immediately save
     _controller.setHeight(heightInCm);
   }
 
@@ -183,13 +207,11 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
   }
 
   void _handleNext() {
-    // ✅ SAVE FINAL HEIGHT IN CM
-    double heightInCm = _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+    final double heightInCm =
+        _isCm ? _selectedCm : ((_selectedFeet * 12 + _selectedInches) * 2.54);
+
     _controller.setHeight(heightInCm);
-    
-    print('Selected height: ${_getDisplayValue()} (${heightInCm.toStringAsFixed(1)} cm)');
-    print('✅ Saved to controller');
-    
+
     if (widget.onNext != null) {
       widget.onNext!();
     }
@@ -209,87 +231,76 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
         position: _slideAnimation,
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              const SizedBox(height: 32),
+          child: _buildContent(context),
+        ),
+      ),
+    );
+  }
 
-              // Question
-              Text(
-                widget.question,
-                style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF000000),
-                  height: 1.2,
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 32),
+
+        // Question
+        Text(
+          widget.question,
+          style: GoogleFonts.poppins(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF000000),
+            height: 1.2,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 32),
+
+        // Unit toggle
+        _buildUnitToggle(),
+
+        const SizedBox(height: 40),
+
+        // Ruler area - expands to fill remaining height and allows normal scrolling
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Stack(
+              children: [
+                // Ruler (left)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildRuler(),
                 ),
-                textAlign: TextAlign.center,
-              ),
 
-              const SizedBox(height: 32),
-
-              // Unit toggle
-              _buildUnitToggle(),
-
-              const SizedBox(height: 40),
-
-              // Ruler with selected value - ENTIRE AREA IS SCROLLABLE
-              Expanded(
-                child: Stack(
-                  children: [
-                    // Invisible overlay that captures scroll gestures ANYWHERE
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onPanUpdate: (details) {
-                          final double itemExtent = 40.0;
-                          final double itemsToScroll = -details.delta.dy / itemExtent;
-                          
-                          final int currentItem = _scrollController.selectedItem;
-                          final int itemCount = _isCm 
-                              ? (((_maxCm - _minCm) / _cmStep).ceil() + 1)
-                              : ((_maxFeet - _minFeet + 1) * 12);
-                          
-                          int newItem = (currentItem + itemsToScroll).round();
-                          newItem = newItem.clamp(0, itemCount - 1);
-                          
-                          if (newItem != currentItem) {
-                            _scrollController.jumpToItem(newItem);
-                          }
-                        },
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    
-                    // Ruler on left side
-                    _buildRuler(),
-                    
-                    // Selected value in center
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 80),
-                        child: Text(
-                          _getDisplayValue(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF000000),
-                          ),
+                // Display value centered (non-interactive)
+                IgnorePointer(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 80),
+                      child: Text(
+                        _getDisplayValue(),
+                        style: GoogleFonts.poppins(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF000000),
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Next button
-              _buildNextButton(),
-
-              const SizedBox(height: 16),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
+
+        const SizedBox(height: 20),
+
+        // Next button
+        _buildNextButton(),
+
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -322,7 +333,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
                 ),
               ),
             ),
-            
+
             // Buttons
             Row(
               children: [
@@ -371,18 +382,22 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
   }
 
   Widget _buildRuler() {
-    final int itemCount = _isCm 
-        ? (((_maxCm - _minCm) / _cmStep).ceil() + 1)
-        : ((_maxFeet - _minFeet + 1) * 12);
+    final int itemCount = _isCm ? _cmItemCount : _ftInchItemCount;
 
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Row(
         children: [
-          // Ruler marks and numbers
+          // Wheel
           SizedBox(
             width: 60,
-            child: IgnorePointer(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                // We don't need to do extra work here because ListWheelScrollView
+                // calls onSelectedItemChanged. But this will ensure scroll notifications
+                // don't bubble weirdly.
+                return false;
+              },
               child: ListWheelScrollView.useDelegate(
                 controller: _scrollController,
                 itemExtent: 40,
@@ -399,9 +414,9 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 4),
-          
+
           // Red indicator line
           Container(
             width: 30,
@@ -415,9 +430,9 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
 
   Widget _buildRulerItem(int index) {
     if (_isCm) {
-      double cmValue = _indexToCm(index);
-      bool isWhole = cmValue % 1 == 0;
-      
+      final double cmValue = _indexToCm(index);
+      final bool isWhole = (cmValue * 10).round() % 10 == 0; // integer cm
+
       if (isWhole) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -452,11 +467,10 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
         );
       }
     } else {
-      // Feet/inches
-      int totalInches = index;
-      int feet = _minFeet + (totalInches ~/ 12);
-      int inches = totalInches % 12;
-      
+      final int totalInches = index;
+      final int feet = _minFeet + (totalInches ~/ 12);
+      final int inches = totalInches % 12;
+
       if (inches == 0) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -470,11 +484,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen>
               ),
             ),
             const SizedBox(width: 6),
-            Container(
-              width: 15,
-              height: 2,
-              color: const Color(0xFF000000),
-            ),
+            Container(width: 15, height: 2, color: const Color(0xFF000000)),
           ],
         );
       } else {
