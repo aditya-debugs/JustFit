@@ -5,12 +5,11 @@ import '../widgets/day_detail_sheet.dart';
 import '../../../controllers/workout_plan_controller.dart';
 import '../../../data/models/workout/phase_model.dart';
 import '../../../data/models/workout/day_plan_model.dart';
-import '../../../data/models/workout/workout_plan_model.dart'; 
-import '../../../data/models/workout/workout_set_model.dart'; 
+import '../../../data/models/workout/workout_plan_model.dart';
+import '../../../data/models/workout/workout_set_model.dart';
 import '../../../data/models/workout/exercise_model.dart';
 import '../../workout_view/rest_day_screen.dart';
 import '../../../data/models/workout/simple_workout_models.dart';
-
 
 // Keep the _convertToWorkoutSets method as is - it converts WorkoutSetModel to simple WorkoutSet
 
@@ -24,7 +23,7 @@ class MyPlanScreen extends StatefulWidget {
 class _MyPlanScreenState extends State<MyPlanScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showBackToDay1Button = false;
-  
+
   // Initialize controller
   late final WorkoutPlanController _controller;
 
@@ -32,13 +31,13 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    
+
     // Initialize controller if not already registered
     if (!Get.isRegistered<WorkoutPlanController>()) {
       Get.put(WorkoutPlanController());
     }
     _controller = Get.find<WorkoutPlanController>();
-    
+
     // // ✅ CRITICAL FIX: Reload plan whenever this screen is shown
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   print('🔄 MyPlanScreen: Reloading workout plan...');
@@ -62,7 +61,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   // ... rest of the file stays exactly the same
 
   void _onScroll() {
@@ -76,6 +75,58 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   void _scrollToTop() {
     _scrollController.animateTo(
       0,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _scrollToCurrentDay() {
+    final plan = _controller.currentPlan.value;
+    if (plan == null) return;
+
+    // Calculate approximate position of current day
+    // We want the current day card to be clearly visible and well-positioned
+    double offset = 0.0;
+
+    // Header height (approximate)
+    offset += 180.0;
+
+    // Count phases before the one containing current day
+    int phasesBeforeCurrent = 0;
+    int daysBeforeCurrent = 0;
+
+    for (var phase in plan.phases) {
+      bool foundCurrentDay = false;
+
+      for (var day in phase.days) {
+        if (day.dayNumber == plan.currentDay) {
+          foundCurrentDay = true;
+          break;
+        }
+        daysBeforeCurrent++;
+      }
+
+      if (foundCurrentDay) {
+        break;
+      } else {
+        phasesBeforeCurrent++;
+      }
+    }
+
+    // Add space for phase headers before current day's phase (each ~50px)
+    offset += phasesBeforeCurrent * 50.0;
+
+    // Add current phase header
+    offset += 50.0;
+
+    // Add space for days before current day in the same phase
+    // Each day card is approximately 100-140px tall (average 115px)
+    // Subtract some offset to show current day nicely positioned (not at top edge)
+    final daysOffset = (daysBeforeCurrent * 115.0) - 150.0;
+    offset += daysOffset > 0 ? daysOffset : 0;
+
+    _scrollController.animateTo(
+      offset,
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeInOut,
     );
@@ -125,28 +176,28 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // ✅ Light grey background like Progress screen
+      backgroundColor: const Color(
+          0xFFF5F5F5), // ✅ Light grey background like Progress screen
       body: SafeArea(
         child: Obx(() {
           // Loading state
           if (_controller.isLoading.value) {
             return _buildLoadingState();
           }
-          
+
           // Error state
           if (_controller.hasError.value) {
             return _buildErrorState();
           }
-          
+
           // No plan state
           if (!_controller.hasPlan) {
             return _buildNoPlanState();
           }
-          
+
           // Success state - show workout plan
           return _buildPlanContent();
         }),
@@ -217,7 +268,8 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF1744),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -274,7 +326,8 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF1744),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -290,7 +343,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   // ========== PLAN CONTENT ==========
   Widget _buildPlanContent() {
     final plan = _controller.currentPlan.value!;
-    
+
     return Stack(
       children: [
         RefreshIndicator(
@@ -318,14 +371,14 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
           ),
         ),
 
-        // Floating "Back to Day 1" button
+        // Floating "Back to Current Day" button
         if (_showBackToDay1Button)
           Positioned(
             left: 0,
             right: 0,
             bottom: 80,
             child: Center(
-              child: _buildBackToDay1Button(),
+              child: _buildBackToDay1Button(plan),
             ),
           ),
       ],
@@ -333,9 +386,10 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   }
 
   // ========== HEADER ==========
-    Widget _buildHeader(WorkoutPlanModel plan) {
+  Widget _buildHeader(WorkoutPlanModel plan) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 8, 20), // ✅ Reduced right padding
+      padding:
+          const EdgeInsets.fromLTRB(16, 16, 8, 20), // ✅ Reduced right padding
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,7 +415,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
 
           const SizedBox(width: 8), // ✅ Reduced from 12 to 8
 
-                    // Menu icon - matches streak badge size (55x55)
+          // Menu icon - matches streak badge size (55x55)
           GestureDetector(
             onTap: () {
               Get.snackbar(
@@ -408,7 +462,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
     final phaseProgress = phase.days.isEmpty
         ? 0
         : (completedDaysInPhase / phase.days.length * 100).round();
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
@@ -496,234 +550,238 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
   }
 
   // ========== DAY CARD ==========
-Widget _buildDayCard({
-  required WorkoutPlanModel plan,
-  required DayPlanModel day,
-  bool showStartButton = false,
-  bool isLastInBlock = false,
-}) {
-  // ✅ HYBRID LOCK LOGIC (calendar + completion-based)
-  final isCompleted = day.isCompleted;
-  
-  // Get current day from plan
-  final currentDay = plan.currentDay;
-  final dayNumber = day.dayNumber;
-  
-  final isPastDay = dayNumber < currentDay;
-  final isCurrentDay = dayNumber == currentDay;
-  final isFutureDay = dayNumber > currentDay;
-  
-  // Use controller's hybrid lock logic
-  final isLocked = _controller.isDayLocked(dayNumber);
-  
-  // Current status
-  final isCurrent = isCurrentDay && !isCompleted;
-  
-  final calories = _controller.calculateDayCalories(day);
-  
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 0),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Timeline (dot and line with check mark)
-        SizedBox(
-          width: 30,
-          child: Column(
-            children: [
-              // Circle indicator with check mark
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: isCompleted 
-                      ? const Color(0xFFE91E63)
-                      : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isCompleted || isCurrent
-                        ? const Color(0xFFE91E63)
-                        : Colors.grey[300]!,
-                    width: 2,
-                  ),
-                ),
-                child: isCompleted
-                    ? const Icon(
-                        Icons.check,
-                        size: 12,
-                        color: Colors.white,
-                      )
-                    : null,
-              ),
-              // Dotted line
-              if (!isLastInBlock)
-                SizedBox(
-                  height: showStartButton ? 140 : 90,
-                  child: CustomPaint(
-                    painter: DottedLinePainter(
-                      color: Colors.grey[300]!,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+  Widget _buildDayCard({
+    required WorkoutPlanModel plan,
+    required DayPlanModel day,
+    bool showStartButton = false,
+    bool isLastInBlock = false,
+  }) {
+    // ✅ HYBRID LOCK LOGIC (calendar + completion-based)
+    final isCompleted = day.isCompleted;
 
-        // Day card
-        Expanded(
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFFFFEBEE) // Light pink for completed
-                      : Colors.white, // White for ALL others (current, past, future)
-                  borderRadius: BorderRadius.circular(12),
-                  border: isCurrent
-                      ? Border.all(color: const Color(0xFFE91E63), width: 2)
-                      : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+    // Get current day from plan
+    final currentDay = plan.currentDay;
+    final dayNumber = day.dayNumber;
+
+    final isPastDay = dayNumber < currentDay;
+    final isCurrentDay = dayNumber == currentDay;
+    final isFutureDay = dayNumber > currentDay;
+
+    // Use controller's hybrid lock logic
+    final isLocked = _controller.isDayLocked(dayNumber);
+
+    // Current status
+    final isCurrent = isCurrentDay && !isCompleted;
+
+    final calories = _controller.calculateDayCalories(day);
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline (dot and line with check mark)
+          SizedBox(
+            width: 30,
+            child: Column(
+              children: [
+                // Circle indicator with check mark
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: isCompleted ? const Color(0xFFE91E63) : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCompleted || isCurrent
+                          ? const Color(0xFFE91E63)
+                          : Colors.grey[300]!,
+                      width: 2,
                     ),
-                  ],
+                  ),
+                  child: isCompleted
+                      ? const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
-                child: Stack(
-                  children: [
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _openDayDetail(plan, day, calories, isLocked),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              // Thumbnail - same for all non-completed
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  width: 60,
-                                  height: 60,
-                                  color: Colors.grey[200],
-                                  child: Image.asset(
-                                    _getDayImage(day.dayNumber),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: isCompleted
-                                            ? const Color(0xFFFCE4EC)
-                                            : Colors.grey[200],
-                                        child: Icon(
-                                          Icons.fitness_center,
+                // Dotted line
+                if (!isLastInBlock)
+                  SizedBox(
+                    height: showStartButton ? 140 : 90,
+                    child: CustomPaint(
+                      painter: DottedLinePainter(
+                        color: Colors.grey[300]!,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Day card
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? const Color(0xFFFFEBEE) // Light pink for completed
+                        : Colors
+                            .white, // White for ALL others (current, past, future)
+                    borderRadius: BorderRadius.circular(12),
+                    border: isCurrent
+                        ? Border.all(color: const Color(0xFFE91E63), width: 2)
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () =>
+                              _openDayDetail(plan, day, calories, isLocked),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                // Thumbnail - same for all non-completed
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    width: 60,
+                                    height: 60,
+                                    color: Colors.grey[200],
+                                    child: Image.asset(
+                                      _getDayImage(day.dayNumber),
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
                                           color: isCompleted
-                                              ? const Color(0xFFE91E63)
-                                              : Colors.grey[400],
-                                          size: 30,
-                                        ),
-                                      );
-                                    },
+                                              ? const Color(0xFFFCE4EC)
+                                              : Colors.grey[200],
+                                          child: Icon(
+                                            Icons.fitness_center,
+                                            color: isCompleted
+                                                ? const Color(0xFFE91E63)
+                                                : Colors.grey[400],
+                                            size: 30,
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
 
-                              const SizedBox(width: 12),
+                                const SizedBox(width: 12),
 
-                              // Day info - same text for all
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Day ${day.dayNumber}',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black, // Same for all
+                                // Day info - same text for all
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Day ${day.dayNumber}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black, // Same for all
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${day.estimatedDuration} min | $calories kcal', // Same for all
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.grey[600], // Same for all
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${day.estimatedDuration} min | $calories kcal', // Same for all
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color:
+                                              Colors.grey[600], // Same for all
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
 
-                              // Status icon - always chevron
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey[400],
-                                size: 24,
-                              ),
-                            ],
+                                // Status icon - always chevron
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey[400],
+                                  size: 24,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Start Training button for current day (only if not completed)
+                if (showStartButton && !isCompleted)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            _openDayDetail(plan, day, calories, false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE91E63),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'START TRAINING',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              // Start Training button for current day (only if not completed)
-              if (showStartButton && !isCompleted)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => _openDayDetail(plan, day, calories, false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE91E63),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'START TRAINING',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   // Helper to rotate through 4 day images
-String _getDayImage(int dayNumber) {
-  final images = [
-    'assets/images/day_1.jpeg',
-    'assets/images/day_2.jpeg',
-    'assets/images/day_3.jpeg',
-    'assets/images/day_4.jpeg',
-  ];
-  return images[(dayNumber - 1) % 4];
-}
+  String _getDayImage(int dayNumber) {
+    final images = [
+      'assets/images/day_1.jpeg',
+      'assets/images/day_2.jpeg',
+      'assets/images/day_3.jpeg',
+      'assets/images/day_4.jpeg',
+    ];
+    return images[(dayNumber - 1) % 4];
+  }
 
   /// ✅ Show dialog when user tries to access locked day
   void _showLockedDayDialog(int lockedDayNumber) {
     final previousDayNumber = lockedDayNumber - 1;
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -746,9 +804,9 @@ String _getDayImage(int dayNumber) {
                   constraints: const BoxConstraints(),
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Title
               Text(
                 'Take it easy!',
@@ -759,9 +817,9 @@ String _getDayImage(int dayNumber) {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Message
               Text(
                 'You need to complete Day $previousDayNumber first.',
@@ -772,9 +830,9 @@ String _getDayImage(int dayNumber) {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Day image placeholder
               Container(
                 width: 180,
@@ -813,9 +871,9 @@ String _getDayImage(int dayNumber) {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Start Day button
               SizedBox(
                 width: double.infinity,
@@ -828,8 +886,10 @@ String _getDayImage(int dayNumber) {
                     if (plan != null) {
                       final previousDay = plan.phases
                           .expand((phase) => phase.days)
-                          .firstWhere((day) => day.dayNumber == previousDayNumber);
-                      final calories = _controller.calculateDayCalories(previousDay);
+                          .firstWhere(
+                              (day) => day.dayNumber == previousDayNumber);
+                      final calories =
+                          _controller.calculateDayCalories(previousDay);
                       _openDayDetail(plan, previousDay, calories, false);
                     }
                   },
@@ -857,9 +917,9 @@ String _getDayImage(int dayNumber) {
     );
   }
 
-
   // ========== DAY DETAIL NAVIGATION ==========
-  void _openDayDetail(WorkoutPlanModel plan, DayPlanModel day, int calories, bool isLocked) {
+  void _openDayDetail(
+      WorkoutPlanModel plan, DayPlanModel day, int calories, bool isLocked) {
     // Check if it's a rest day
     if (day.isRestDay) {
       // Navigate to Rest Day Screen
@@ -889,7 +949,7 @@ String _getDayImage(int dayNumber) {
     );
   }
 
-  // ========== TYPE CONVERSION HELPER ========== 
+  // ========== TYPE CONVERSION HELPER ==========
   /// Convert WorkoutSetModel to WorkoutSet (for legacy day detail screen)
   List<WorkoutSet> _convertToWorkoutSets(List<WorkoutSetModel> models) {
     return models.map((setModel) {
@@ -898,11 +958,11 @@ String _getDayImage(int dayNumber) {
         exercises: setModel.exercises.map((exerciseModel) {
           return Exercise(
             name: exerciseModel.exerciseName,
-            duration: exerciseModel.duration ?? 
-                     (exerciseModel.reps != null ? exerciseModel.reps! * 3 : 30),
+            duration: exerciseModel.duration ??
+                (exerciseModel.reps != null ? exerciseModel.reps! * 3 : 30),
             thumbnailPath: exerciseModel.thumbnailUrl,
-            actionSteps: exerciseModel.instructions.isNotEmpty 
-                ? exerciseModel.instructions 
+            actionSteps: exerciseModel.instructions.isNotEmpty
+                ? exerciseModel.instructions
                 : null,
             breathingRhythm: exerciseModel.breathingRhythm,
             actionFeeling: exerciseModel.actionFeeling,
@@ -913,8 +973,9 @@ String _getDayImage(int dayNumber) {
     }).toList();
   }
 
-  // ========== BACK TO DAY 1 BUTTON ==========
-  Widget _buildBackToDay1Button() {
+  // ========== BACK TO CURRENT DAY BUTTON ==========
+  Widget _buildBackToDay1Button(WorkoutPlanModel plan) {
+    final currentDay = plan.currentDay;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -931,7 +992,7 @@ String _getDayImage(int dayNumber) {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _scrollToTop,
+          onTap: _scrollToCurrentDay,
           borderRadius: BorderRadius.circular(30),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -945,7 +1006,7 @@ String _getDayImage(int dayNumber) {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Back to Day 1',
+                  'Back to Day $currentDay',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -959,7 +1020,6 @@ String _getDayImage(int dayNumber) {
       ),
     );
   }
-
 }
 
 // Custom painter for dotted vertical line
