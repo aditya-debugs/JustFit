@@ -19,6 +19,8 @@ import '../../../data/models/workout/simple_workout_models.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
+import 'package:video_player/video_player.dart';
+import 'dart:io' show Platform; // ✅ ADD THIS
 
 class ActiveWorkoutScreen extends StatefulWidget {
   final int dayNumber;
@@ -75,6 +77,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   late WorkoutAudioController _audioController;
   late FirestoreService _firestoreService;
   DateTime? _workoutStartTime;
+  VideoPlayerController? _videoController;
+  VideoPlayerController? _nextVideoController; // Pre-load next video
+  int _currentVideoIndex = 0; // 0, 1, or 2 for rotating videos
+  bool _isVideoInitialized = false;
 
   @override
   void initState() {
@@ -129,7 +135,94 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       duration: const Duration(milliseconds: 400),
     );
     
+    _initializeVideos(); // ✅ Initialize videos
     _startWorkout();
+  }
+
+  // ✅ ADD THIS METHOD after initState (line 138):
+  Future<void> _initializeVideos() async {
+    try {
+      // ✅ CRITICAL: Configure video player to mix with other audio
+      // This prevents the video from taking audio focus from background music
+      
+      // Initialize first video
+      _videoController = VideoPlayerController.asset(
+        'assets/workout_jsons/video_1.mp4',
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: true, // ✅ KEY FIX: Allow mixing with background music
+          allowBackgroundPlayback: false, // We don't need background playback
+        ),
+      );
+      
+      await _videoController!.initialize();
+      await _videoController!.setLooping(true);
+      await _videoController!.setVolume(0.0); // Mute (video has no audio anyway)
+      await _videoController!.play();
+      
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+      
+      // Pre-load second video for seamless transition
+      _nextVideoController = VideoPlayerController.asset(
+        'assets/workout_jsons/video_2.mp4',
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: true, // ✅ KEY FIX: Allow mixing
+          allowBackgroundPlayback: false,
+        ),
+      );
+      await _nextVideoController!.initialize();
+      await _nextVideoController!.setLooping(true);
+      await _nextVideoController!.setVolume(0.0);
+      
+      print('✅ Videos initialized with audio mixing enabled');
+    } catch (e) {
+      print('❌ Error initializing videos: $e');
+    }
+  }
+  
+  // ✅ ADD THIS METHOD to switch videos smoothly:
+  Future<void> _switchToNextVideo() async {
+    if (_nextVideoController == null || !mounted) return;
+    
+    try {
+      // Swap controllers
+      final oldController = _videoController;
+      _videoController = _nextVideoController;
+      
+      // Start new video immediately (already configured for mixing)
+      await _videoController!.setVolume(0.0);
+      await _videoController!.play();
+      
+      setState(() {
+        _currentVideoIndex = (_currentVideoIndex + 1) % 3; // Rotate 0→1→2→0
+      });
+      
+      // Dispose old controller and prepare next one
+      await oldController?.pause();
+      await oldController?.dispose();
+      
+      // Pre-load NEXT video in the rotation (looking ahead)
+      final nextVideoNumber = ((_currentVideoIndex + 1) % 3) + 1; // Next video: 1, 2, or 3
+      final nextVideoPath = 'assets/workout_jsons/video_$nextVideoNumber.mp4';
+      
+      _nextVideoController = VideoPlayerController.asset(
+        nextVideoPath,
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: true, // ✅ KEY FIX: Always allow mixing
+          allowBackgroundPlayback: false,
+        ),
+      );
+      await _nextVideoController!.initialize();
+      await _nextVideoController!.setLooping(true);
+      await _nextVideoController!.setVolume(0.0);
+      
+      print('✅ Switched to video ${_currentVideoIndex + 1}, pre-loaded video $nextVideoNumber');
+    } catch (e) {
+      print('❌ Error switching video: $e');
+    }
   }
 
   @override
@@ -141,11 +234,18 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     _countdownScaleController.dispose();
     _countdownFadeController.dispose();
     
+    _videoController?.pause();
+    _videoController?.dispose();
+    _nextVideoController?.pause();
+    _nextVideoController?.dispose();
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+
+
     
     super.dispose();
   }
@@ -282,6 +382,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
     
     if (_currentExerciseIndex < _currentExerciseList.length - 1) {
+      _switchToNextVideo(); // ✅ ADD THIS LINE - Switch video for next exercise
       setState(() {
         _currentExerciseIndex++;
         _isGetReadyPhase = true;
@@ -372,6 +473,13 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     });
     
     _audioController.setWorkoutPaused(_isPaused);
+    
+    // ✅ ADD THESE LINES - Sync video with pause state
+    if (_isPaused) {
+      _videoController?.pause();
+    } else {
+      _videoController?.play();
+    }
   }
 
   void _goToPrevious() {
@@ -779,6 +887,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   setState(() {
                     _isPaused = true;
                   });
+                  _videoController?.pause(); // ✅ ADD THIS LINE
                   _audioController.setWorkoutPaused(true);
                   
                   final exercise = currentExercise;
@@ -818,6 +927,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   setState(() {
                     _isPaused = false;
                   });
+                  _videoController?.play(); // ✅ ADD THIS LINE
                   _audioController.setWorkoutPaused(false);
                 },
               ),
@@ -857,19 +967,20 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   Widget _buildExerciseArea() {
     return Container(
       color: Colors.white,
-      child: Center(
-        child: Image.asset(
-          'assets/images/exercise_placeholder.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              Icons.fitness_center,
-              size: 100,
-              color: Colors.grey[300],
-            );
-          },
-        ),
-      ),
+      child: _isVideoInitialized && _videoController != null
+          ? Center(
+              child: AspectRatio(
+                aspectRatio: _videoController!.value.aspectRatio,
+                child: VideoPlayer(_videoController!),
+              ),
+            )
+          : Center(
+              child: Icon(
+                Icons.fitness_center,
+                size: 100,
+                color: Colors.grey[300],
+              ),
+            ),
     );
   }
 
@@ -1277,6 +1388,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     setState(() {
       _isPaused = true;
     });
+    _videoController?.pause(); // ✅ ADD THIS LINE
     _audioController.setWorkoutPaused(true);
     
     showGeneralDialog(
@@ -1438,6 +1550,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   setState(() {
                     _isPaused = false;
                   });
+                  _videoController?.play(); // ✅ ADD THIS LINE
                   _audioController.setWorkoutPaused(false);
                 },
                 style: ElevatedButton.styleFrom(

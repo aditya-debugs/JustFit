@@ -84,7 +84,6 @@ desktop.ini
 **/*.pdf
 
 # Large media files (consider using Git LFS if needed)
-**/*.mp4
 **/*.mp3
 **/*.avi
 **/*.mov

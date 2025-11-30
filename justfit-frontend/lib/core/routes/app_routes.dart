@@ -86,6 +86,7 @@ static void startOnboardingFlow() {
         partTitle: OnboardingData.goalQ1['partTitle'],
         question: OnboardingData.goalQ1['question'],
         options: OnboardingData.goalQ1['options'],
+        isMultiSelect: OnboardingData.goalQ1['isMultiSelect'] ?? false, // ✅ ADD THIS LINE
         currentPart: OnboardingData.goalQ1['currentPart'],
         currentQuestionInPart: OnboardingData.goalQ1['currentQuestionInPart'],
         totalQuestionsInPart: OnboardingData.goalQ1['totalQuestionsInPart'],
@@ -647,33 +648,39 @@ static void startOnboardingFlow() {
     );
   }
 
-  static void _navigateToLoadingScreen(bool answer) {
+  static void _navigateToLoadingScreen(bool answer) async {
     print('Motivation 3 answered: ${answer ? "Yes" : "No"}');
-    print('Moving to plan creation loading screen...');
+    print('🚀 Starting plan generation BEFORE loading screen...');
+    
+    // ✅ CRITICAL: Start plan generation immediately
+    final controller = Get.find<OnboardingController>();
+    
+    // Navigate to loading screen
     Get.to(
       () => PlanCreationLoadingScreen(
         onComplete: () => _navigateToMainApp(),
       ),
       transition: Transition.fade,
     );
+    
+    // ✅ IMMEDIATELY trigger plan generation in background
+    controller.submitOnboarding().then((success) {
+      if (success) {
+        print('✅ Plan generation completed successfully!');
+      } else {
+        print('❌ Plan generation failed');
+        // The loading screen will handle timeout
+      }
+    });
   }
 
   static void _navigateToMainApp() {
     print('✅ Plan creation complete! Moving to main app...');
     
-    // ✅ SUBMIT ONBOARDING DATA BEFORE NAVIGATING
-    final controller = Get.find<OnboardingController>();
-    controller.submitOnboarding().then((success) {
-      if (success) {
-        print('✅ Onboarding data saved successfully!');
-        Get.offAll(
-          () => const MainScreen(),
-          transition: Transition.fade,
-        );
-      } else {
-        print('❌ Failed to save onboarding data');
-        // Optionally show error and stay on current screen
-      }
-    });
+    // Plan is already generated and saved, just navigate
+    Get.offAll(
+      () => const MainScreen(),
+      transition: Transition.fade,
+    );
   }
 }

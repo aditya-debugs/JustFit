@@ -114,18 +114,11 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       }
     });
 
-    // ✅ Check if plan already exists (user might be refreshing)
-    if (_planController.currentPlan.value != null && 
-        _planController.currentPlan.value!.phases.isNotEmpty) {
-      print('✅ Plan already exists, completing immediately');
-      _completePlanLoading();
-    } else {
-      // ✅ Poll for plan completion every 1 second
-      print('⏳ Starting to poll for plan completion...');
-      _pollTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _checkPlanStatus();
-      });
-    }
+    // ✅ Start polling for plan immediately
+    print('⏳ Starting to poll for plan completion...');
+    _pollTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) { // ✅ Check every 500ms
+      _checkPlanStatus();
+    });
   }
 
   void _checkPlanStatus() {
@@ -133,10 +126,13 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
     if (_planController.currentPlan.value != null && 
         _planController.currentPlan.value!.phases.isNotEmpty) {
       
-      print('✅ Plan detected! Days: ${_planController.currentPlan.value!.phases.length}');
+      print('✅ Plan detected! Phases: ${_planController.currentPlan.value!.phases.length}');
       _completePlanLoading();
     } else {
-      print('⏳ Still waiting for plan... (${DateTime.now().second}s)');
+      // Only print every 2 seconds to avoid log spam
+      if (DateTime.now().second % 2 == 0) {
+        print('⏳ Still waiting for plan generation...');
+      }
     }
   }
 
@@ -149,17 +145,22 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       // Animate to 100% completion
       _progressController.animateTo(
         1.0,
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOut,
       );
 
-      // Wait a bit for the animation, then complete
-      Future.delayed(const Duration(milliseconds: 800), () async {
+      // Wait for animation to complete, then navigate
+      Future.delayed(const Duration(milliseconds: 1200), () async {
         if (mounted) {
           _pollTimer?.cancel();
           
           // ✅ Save initial weight entry
-          await _onboardingController.saveInitialWeight();
+          try {
+            await _onboardingController.saveInitialWeight();
+            print('✅ Initial weight saved');
+          } catch (e) {
+            print('⚠️ Failed to save initial weight: $e');
+          }
           
           widget.onComplete?.call();
         }
