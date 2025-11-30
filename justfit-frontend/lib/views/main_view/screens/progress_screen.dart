@@ -29,11 +29,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
   DateTime _selectedWeightMonth = DateTime.now();
   
   // Duration tracking (independent)
-  DateTime _selectedDurationWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
+  DateTime _selectedDurationWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   Map<int, int> weeklyDurations = {};
 
   // Calories tracking (independent)
-  DateTime _selectedCaloriesWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
+  DateTime _selectedCaloriesWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   Map<int, int> weeklyCalories = {};
   
   // Monthly workout days
@@ -149,6 +149,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = _userService.currentUser.value;
     if (user == null) return;
 
+    print('⏱️ Loading weekly durations for week starting: $_selectedDurationWeekStart');
+
     try {
       final durations = await _firestoreService.getWeeklyDuration(
         userId: user.uid,
@@ -156,16 +158,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
 
       setState(() {
-        weeklyDurations = durations;
+        weeklyDurations = durations; // ✅ Data is already in minutes from Firestore
       });
     } catch (e) {
-      print('Error loading weekly durations: $e');
+      print('❌ Error loading weekly durations: $e');
     }
   }
 
   Future<void> _loadWeeklyCalories() async {
     final user = _userService.currentUser.value;
     if (user == null) return;
+
+    print('🔥 Loading weekly calories for week starting: $_selectedCaloriesWeekStart');
 
     try {
       final calories = await _firestoreService.getWeeklyCalories(
@@ -174,10 +178,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
 
       setState(() {
-        weeklyCalories = calories;
+        weeklyCalories = calories; // ✅ Pure Firestore data, no static fallback
       });
     } catch (e) {
-      print('Error loading weekly calories: $e');
+      print('❌ Error loading weekly calories: $e');
     }
   }
 
@@ -1032,7 +1036,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return _buildBarGraphSection(
       title: 'Workout Duration',
       data: weeklyDurations,
-      unit: 'sec',
+      unit: 'min',
       color: const Color(0xFFE91E63),
       average: _calculateAverage(weeklyDurations),
       weekStart: _selectedDurationWeekStart,
@@ -1088,8 +1092,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
     required VoidCallback onNext,
     required bool canGoNext,
   }) {
-    final weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    final maxValue = data.values.isEmpty ? 10 : data.values.reduce((a, b) => a > b ? a : b);
+    final weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    // ✅ Set realistic minimum scale based on metric type
+    final dataMax = data.values.isEmpty ? 0 : data.values.reduce((a, b) => a > b ? a : b);
+    final minScale = unit == 'min' ? 30 : 200; // 30 min or 200 kcal minimum Y-axis
+    final maxValue = dataMax > minScale ? dataMax : minScale;
     final weekEnd = weekStart.add(const Duration(days: 6));
     
     return Container(
@@ -1112,7 +1119,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Text(
             title,
             style: GoogleFonts.poppins(
-              fontSize: 20,
+              fontSize: 22, // ✅ Slightly bigger title
               fontWeight: FontWeight.w700,
               color: Colors.black,
             ),
@@ -1133,7 +1140,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               Text(
                 '${DateFormat('MMM d, yyyy').format(weekStart)} - ${DateFormat('MMM d, yyyy').format(weekEnd)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
+                  fontSize: 14, // ✅ Slightly bigger date range
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
                 ),
@@ -1156,7 +1163,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               // Y-axis labels
               SizedBox(
                 width: 30,
-                height: 150,
+                height: 180,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1174,58 +1181,66 @@ class _ProgressScreenState extends State<ProgressScreen> {
               // Bar graph
               Expanded(
                 child: SizedBox(
-                  height: 150,
+                  height: 180, // ✅ Increased from 150
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: List.generate(7, (index) {
                       final value = data[index] ?? 0;
-                      final barHeight = maxValue > 0 ? (value / maxValue) * 120 : 0.0;
+                      final barHeight = maxValue > 0 ? (value / maxValue) * 140 : 0.0; // ✅ Increased from 120
                       
-                      return Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            // Value label on top of bar
-                            if (value > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '$value $unit',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
+                      return Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2), // Small spacing between bars
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min, // ✅ CRITICAL: Minimize vertical space
+                            children: [
+                              // Value label on top of bar
+                              if (value > 0)
+                                Container(
+                                  constraints: const BoxConstraints(maxWidth: 45),
+                                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    value.toString(),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 8.5,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.clip,
+                                    maxLines: 1,
                                   ),
                                 ),
+                              if (value > 0) const SizedBox(height: 3), // ✅ Reduced from 4
+                              
+                              // Bar
+                              Container(
+                                width: 22,
+                                height: barHeight < 2 && value > 0 ? 2 : barHeight,
+                                decoration: BoxDecoration(
+                                  color: value > 0 ? color : Colors.transparent,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                ),
                               ),
-                            if (value > 0) const SizedBox(height: 4),
-                            
-                            // Bar
-                            Container(
-                              width: 20,
-                              height: barHeight < 2 && value > 0 ? 2 : barHeight,
-                              decoration: BoxDecoration(
-                                color: value > 0 ? color : Colors.transparent,
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                              const SizedBox(height: 6), // ✅ Reduced from 8
+                              
+                              // Day label
+                              Text(
+                                weekDays[index],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            
-                            // Day label
-                            Text(
-                              weekDays[index],
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     }),

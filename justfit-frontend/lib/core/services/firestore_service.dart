@@ -491,6 +491,8 @@ class FirestoreService extends GetxService {
     try {
       final weekEnd = weekStart.add(const Duration(days: 7));
       
+      print('⏱️ Querying duration from ${weekStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
+      
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -499,20 +501,24 @@ class FirestoreService extends GetxService {
           .where('completedAt', isLessThan: Timestamp.fromDate(weekEnd))
           .get();
       
+      print('⏱️ Found ${snapshot.docs.length} workouts for duration calculation');
+      
       final Map<int, int> durations = {};
       
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final date = (data['completedAt'] as Timestamp).toDate();
-        final weekday = date.weekday % 7; // 0 = Sunday
-        final duration = data['totalMinutes'] ?? 0;
+        final weekday = date.weekday - 1; // 0 = Monday, 6 = Sunday
+        final duration = data['duration'] ?? 0; // ✅ FIXED: Changed from 'totalMinutes' to 'duration'
         
         durations[weekday] = (durations[weekday] ?? 0) + (duration as int);
+        print('  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${duration} min');
       }
       
+      print('⏱️ Final durations (in minutes): $durations');
       return durations;
     } catch (e) {
-      print('Error getting weekly duration: $e');
+      print('❌ Error getting weekly duration: $e');
       return {};
     }
   }
@@ -525,6 +531,8 @@ class FirestoreService extends GetxService {
     try {
       final weekEnd = weekStart.add(const Duration(days: 7));
       
+      print('🔥 Querying calories from ${weekStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
+      
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -533,20 +541,24 @@ class FirestoreService extends GetxService {
           .where('completedAt', isLessThan: Timestamp.fromDate(weekEnd))
           .get();
       
+      print('🔥 Found ${snapshot.docs.length} workouts for calories calculation');
+      
       final Map<int, int> calories = {};
       
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final date = (data['completedAt'] as Timestamp).toDate();
-        final weekday = date.weekday % 7; // 0 = Sunday
-        final cal = data['totalCalories'] ?? 0;
+        final weekday = date.weekday - 1; // 0 = Monday, 6 = Sunday
+        final cal = data['calories'] ?? 0; // ✅ FIXED: Changed from 'totalCalories' to 'calories'
         
         calories[weekday] = (calories[weekday] ?? 0) + (cal as int);
+        print('  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${cal} kcal');
       }
       
+      print('🔥 Final calories: $calories');
       return calories;
     } catch (e) {
-      print('Error getting weekly calories: $e');
+      print('❌ Error getting weekly calories: $e');
       return {};
     }
   }
