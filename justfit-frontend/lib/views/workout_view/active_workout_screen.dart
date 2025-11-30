@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../core/animations/page_transitions.dart';
 import 'dart:math' as math;
 import '../main_view/widgets/day_detail_sheet.dart';
 import '../../data/models/achievement_model.dart';
@@ -52,7 +53,6 @@ class ActiveWorkoutScreen extends StatefulWidget {
 
 class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     with TickerProviderStateMixin {
-  
   int _currentExerciseIndex = 0;
   int _currentRound = 1;
   int _totalRounds = 3;
@@ -68,12 +68,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   double _exerciseTime = 0.0;
   double _restTime = 0.0;
   Timer? _timer;
-  
+
   bool _isLandscape = false;
-  
+
   late AnimationController _countdownScaleController;
   late AnimationController _countdownFadeController;
-  
+
   late WorkoutAudioController _audioController;
   late FirestoreService _firestoreService;
   DateTime? _workoutStartTime;
@@ -86,21 +86,26 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   void initState() {
     super.initState();
 
-    _warmupExercises = widget.exercises.where((e) => e.setType == 'warmup').toList();
-    _mainExercises = widget.exercises.where((e) => e.setType == 'main').toList();
-    _cooldownExercises = widget.exercises.where((e) => e.setType == 'cooldown').toList();
-    
+    _warmupExercises =
+        widget.exercises.where((e) => e.setType == 'warmup').toList();
+    _mainExercises =
+        widget.exercises.where((e) => e.setType == 'main').toList();
+    _cooldownExercises =
+        widget.exercises.where((e) => e.setType == 'cooldown').toList();
+
     if (_mainExercises.isNotEmpty) {
       _totalRounds = _mainExercises.first.sets ?? 3;
     }
-    
+
     print('🔍 Workout Split:');
     print('  Warmup: ${_warmupExercises.length} exercises');
-    print('  Main: ${_mainExercises.length} exercises (${_totalRounds} rounds)');
+    print(
+        '  Main: ${_mainExercises.length} exercises (${_totalRounds} rounds)');
     print('  Cooldown: ${_cooldownExercises.length} exercises');
     print('🔍 All exercises (${widget.exercises.length}):');
     for (var i = 0; i < widget.exercises.length; i++) {
-      print('  $i: ${widget.exercises[i].name} - setType: "${widget.exercises[i].setType}"');
+      print(
+          '  $i: ${widget.exercises[i].name} - setType: "${widget.exercises[i].setType}"');
     }
 
     if (!Get.isRegistered<WorkoutAudioController>()) {
@@ -110,7 +115,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     try {
       final workoutPlanController = Get.find<WorkoutPlanController>();
       if (workoutPlanController.currentPlan.value != null) {
-        final currentDay = workoutPlanController.currentPlan.value!.getDayByNumber(widget.dayNumber);
+        final currentDay = workoutPlanController.currentPlan.value!
+            .getDayByNumber(widget.dayNumber);
         if (currentDay != null) {
           _audioController.setCyclePhase(currentDay.intensity);
         }
@@ -120,21 +126,21 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
 
     _firestoreService = Get.find<FirestoreService>();
-    
+
     _audioController.setWorkoutPaused(false);
-    
+
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    
+
     _countdownScaleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _countdownFadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    
+
     _initializeVideos(); // ✅ Initialize videos
     _startWorkout();
   }
@@ -144,7 +150,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     try {
       // ✅ CRITICAL: Configure video player to mix with other audio
       // This prevents the video from taking audio focus from background music
-      
+
       // Initialize first video
       _videoController = VideoPlayerController.asset(
         'assets/workout_jsons/video_1.mp4',
@@ -153,18 +159,19 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           allowBackgroundPlayback: false, // We don't need background playback
         ),
       );
-      
+
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.0); // Mute (video has no audio anyway)
+      await _videoController!
+          .setVolume(0.0); // Mute (video has no audio anyway)
       await _videoController!.play();
-      
+
       if (mounted) {
         setState(() {
           _isVideoInitialized = true;
         });
       }
-      
+
       // Pre-load second video for seamless transition
       _nextVideoController = VideoPlayerController.asset(
         'assets/workout_jsons/video_2.mp4',
@@ -176,38 +183,39 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       await _nextVideoController!.initialize();
       await _nextVideoController!.setLooping(true);
       await _nextVideoController!.setVolume(0.0);
-      
+
       print('✅ Videos initialized with audio mixing enabled');
     } catch (e) {
       print('❌ Error initializing videos: $e');
     }
   }
-  
+
   // ✅ ADD THIS METHOD to switch videos smoothly:
   Future<void> _switchToNextVideo() async {
     if (_nextVideoController == null || !mounted) return;
-    
+
     try {
       // Swap controllers
       final oldController = _videoController;
       _videoController = _nextVideoController;
-      
+
       // Start new video immediately (already configured for mixing)
       await _videoController!.setVolume(0.0);
       await _videoController!.play();
-      
+
       setState(() {
         _currentVideoIndex = (_currentVideoIndex + 1) % 3; // Rotate 0→1→2→0
       });
-      
+
       // Dispose old controller and prepare next one
       await oldController?.pause();
       await oldController?.dispose();
-      
+
       // Pre-load NEXT video in the rotation (looking ahead)
-      final nextVideoNumber = ((_currentVideoIndex + 1) % 3) + 1; // Next video: 1, 2, or 3
+      final nextVideoNumber =
+          ((_currentVideoIndex + 1) % 3) + 1; // Next video: 1, 2, or 3
       final nextVideoPath = 'assets/workout_jsons/video_$nextVideoNumber.mp4';
-      
+
       _nextVideoController = VideoPlayerController.asset(
         nextVideoPath,
         videoPlayerOptions: VideoPlayerOptions(
@@ -218,8 +226,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       await _nextVideoController!.initialize();
       await _nextVideoController!.setLooping(true);
       await _nextVideoController!.setVolume(0.0);
-      
-      print('✅ Switched to video ${_currentVideoIndex + 1}, pre-loaded video $nextVideoNumber');
+
+      print(
+          '✅ Switched to video ${_currentVideoIndex + 1}, pre-loaded video $nextVideoNumber');
     } catch (e) {
       print('❌ Error switching video: $e');
     }
@@ -233,7 +242,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     _audioController.setWorkoutPaused(false);
     _countdownScaleController.dispose();
     _countdownFadeController.dispose();
-    
+
     _videoController?.pause();
     _videoController?.dispose();
     _nextVideoController?.pause();
@@ -245,8 +254,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       DeviceOrientation.landscapeRight,
     ]);
 
-
-    
     super.dispose();
   }
 
@@ -263,7 +270,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
   }
 
-  WorkoutExercise get currentExercise => _currentExerciseList[_currentExerciseIndex];
+  WorkoutExercise get currentExercise =>
+      _currentExerciseList[_currentExerciseIndex];
 
   List<WorkoutExercise> get _exercises => widget.exercises;
 
@@ -271,9 +279,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     if (_exercises.isEmpty) return;
 
     _workoutStartTime = DateTime.now();
-    
+
     _audioController.startBackgroundMusic();
-    
+
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) {
         _audioController.playGetReadyForExercise(
@@ -282,7 +290,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         );
       }
     });
-    
+
     _startGetReadyPhase();
   }
 
@@ -294,8 +302,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       _countdown = 10.0;
       _isPaused = false;
     });
-    
-    final isFirstExercise = _currentPhase == 'warmup' && _currentExerciseIndex == 0;
+
+    final isFirstExercise =
+        _currentPhase == 'warmup' && _currentExerciseIndex == 0;
     if (!isFirstExercise) {
       final currentExercise = _exercises[_currentExerciseIndex];
       _audioController.playGetReadyForExercise(
@@ -303,25 +312,25 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         isFirstExercise: false,
       );
     }
-    
+
     bool hasCountdownStarted = false;
-    
+
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (_isPaused) return;
-      
+
       setState(() {
         _countdown -= 0.1;
-        
+
         if (_countdown <= 3 && _countdown > 0 && _countdown % 1 < 0.1) {
           _countdownScaleController.forward(from: 0);
           _countdownFadeController.forward(from: 0);
         }
-        
+
         if (_countdown <= 3.5 && _countdown > 3.4 && !hasCountdownStarted) {
           _audioController.playCountdown321Go();
           hasCountdownStarted = true;
         }
-        
+
         if (_countdown <= 0) {
           timer.cancel();
           _startExercisePhase();
@@ -333,7 +342,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   void _startExercisePhase() {
     final currentExercise = _exercises[_currentExerciseIndex];
     final adjustedDuration = _getExerciseDuration(currentExercise.duration);
-    
+
     setState(() {
       _isGetReadyPhase = false;
       _isRestPhase = false;
@@ -341,12 +350,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       _exerciseTime = 0.0;
       _isPaused = false;
     });
-    
+
     print('🏋️ Starting exercise: ${currentExercise.name}');
-    print('  Base Duration: ${currentExercise.duration}s, Adjusted for Round $_currentRound: ${adjustedDuration}s');
-    
-    final shouldPlayMotivation = (_currentExerciseIndex + _currentRound) % 2 == 0;
-    
+    print(
+        '  Base Duration: ${currentExercise.duration}s, Adjusted for Round $_currentRound: ${adjustedDuration}s');
+
+    final shouldPlayMotivation =
+        (_currentExerciseIndex + _currentRound) % 2 == 0;
+
     if (shouldPlayMotivation) {
       final midpoint = adjustedDuration / 2;
       Future.delayed(Duration(milliseconds: (midpoint * 1000).toInt()), () {
@@ -355,15 +366,15 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         }
       });
     }
-    
+
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (_isPaused) return;
-      
+
       setState(() {
         _exerciseTime += 0.1;
-        
+
         final duration = adjustedDuration.toDouble();
-        
+
         if (_exerciseTime >= duration) {
           timer.cancel();
           _onExerciseComplete();
@@ -375,12 +386,13 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   void _onExerciseComplete() {
     print('🔍 Exercise Complete!');
     print('  Current Phase: $_currentPhase');
-    print('  Current Exercise Index: $_currentExerciseIndex / ${_currentExerciseList.length - 1}');
-    
+    print(
+        '  Current Exercise Index: $_currentExerciseIndex / ${_currentExerciseList.length - 1}');
+
     if (_currentPhase == 'main') {
       print('  Current Round: $_currentRound / $_totalRounds');
     }
-    
+
     if (_currentExerciseIndex < _currentExerciseList.length - 1) {
       _switchToNextVideo(); // ✅ ADD THIS LINE - Switch video for next exercise
       setState(() {
@@ -426,15 +438,15 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       _restTime = 60.0;
       _isPaused = false;
     });
-    
+
     _audioController.playRestTime(_currentRound);
-    
+
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (_isPaused) return;
-      
+
       setState(() {
         _restTime -= 0.1;
-        
+
         if (_restTime <= 0) {
           timer.cancel();
           setState(() {
@@ -456,9 +468,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   void _skipRoundRest() {
     _timer?.cancel();
-    
+
     _audioController.stopCurrentSpeech();
-    
+
     setState(() {
       _isRoundRestPhase = false;
       _currentRound++;
@@ -471,9 +483,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     setState(() {
       _isPaused = !_isPaused;
     });
-    
+
     _audioController.setWorkoutPaused(_isPaused);
-    
+
     // ✅ ADD THESE LINES - Sync video with pause state
     if (_isPaused) {
       _videoController?.pause();
@@ -484,22 +496,29 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   void _goToPrevious() {
     _timer?.cancel();
-    
+
     _audioController.stopCurrentSpeech();
-    
+
     if (_currentExerciseIndex > 0) {
       setState(() {
         _currentExerciseIndex--;
       });
     }
+
+    // ✅ Switch to next video when changing exercise
+    _switchToNextVideo();
+
     _startGetReadyPhase();
   }
 
   void _goToNext() {
     _timer?.cancel();
-    
+
     _audioController.stopCurrentSpeech();
-    
+
+    // ✅ Switch to next video when changing exercise
+    _switchToNextVideo();
+
     _moveToNextExercise();
   }
 
@@ -507,8 +526,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     print('🔍 Skip button pressed - Moving to next exercise');
     print('  Current Phase: $_currentPhase');
     print('  Current Round: $_currentRound / $_totalRounds');
-    print('  Current Exercise Index: $_currentExerciseIndex / ${_currentExerciseList.length - 1}');
-    
+    print(
+        '  Current Exercise Index: $_currentExerciseIndex / ${_currentExerciseList.length - 1}');
+
     if (_currentExerciseIndex < _currentExerciseList.length - 1) {
       print('  ⏭️  Skipping to next exercise in same phase');
       setState(() {
@@ -518,7 +538,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       _startGetReadyPhase();
     } else {
       print('  ✅ Last exercise in $_currentPhase - transitioning');
-      
+
       if (_currentPhase == 'warmup') {
         print('  → Starting Main Workout Round 1');
         setState(() {
@@ -550,35 +570,40 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   void _completeWorkout() {
     _timer?.cancel();
-    
+
     _audioController.stopBackgroundMusic();
-    
+
     _showWorkoutCompleteDialog();
   }
 
   Future<Exercise?> _fetchExerciseDetails(String exerciseName) async {
     try {
       final exerciseId = exerciseName.toLowerCase().replaceAll(' ', '-');
-      
+
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/workout/exercise-details'),
+        Uri.parse('https://justfit.onrender.com/api/workout/exercise-details'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'exerciseIds': [exerciseId]}),
+        body: jsonEncode({
+          'exerciseIds': [exerciseId]
+        }),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final exercises = data['exercises'] as List;
-        
+
         if (exercises.isNotEmpty) {
           final exerciseData = exercises[0];
           return Exercise(
             name: exerciseData['name'],
             duration: _exercises[_currentExerciseIndex].duration,
             actionSteps: List<String>.from(exerciseData['actionSteps'] ?? []),
-            breathingRhythm: List<String>.from(exerciseData['breathingRhythm'] ?? []),
-            actionFeeling: List<String>.from(exerciseData['actionFeeling'] ?? []),
-            commonMistakes: List<String>.from(exerciseData['commonMistakes'] ?? []),
+            breathingRhythm:
+                List<String>.from(exerciseData['breathingRhythm'] ?? []),
+            actionFeeling:
+                List<String>.from(exerciseData['actionFeeling'] ?? []),
+            commonMistakes:
+                List<String>.from(exerciseData['commonMistakes'] ?? []),
           );
         }
       }
@@ -592,7 +617,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     setState(() {
       _isLandscape = !_isLandscape;
     });
-    
+
     if (_isLandscape) {
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
@@ -606,24 +631,24 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   }
 
   double _getOverallProgress() {
-    int totalSteps = _warmupExercises.length + 
-                     (_mainExercises.length * _totalRounds) + 
-                     _cooldownExercises.length;
-    
+    int totalSteps = _warmupExercises.length +
+        (_mainExercises.length * _totalRounds) +
+        _cooldownExercises.length;
+
     int completedSteps = 0;
-    
+
     if (_currentPhase == 'warmup') {
       completedSteps = _currentExerciseIndex;
     } else if (_currentPhase == 'main') {
-      completedSteps = _warmupExercises.length + 
-                       (_currentRound - 1) * _mainExercises.length + 
-                       _currentExerciseIndex;
+      completedSteps = _warmupExercises.length +
+          (_currentRound - 1) * _mainExercises.length +
+          _currentExerciseIndex;
     } else if (_currentPhase == 'cooldown') {
-      completedSteps = _warmupExercises.length + 
-                       (_mainExercises.length * _totalRounds) + 
-                       _currentExerciseIndex;
+      completedSteps = _warmupExercises.length +
+          (_mainExercises.length * _totalRounds) +
+          _currentExerciseIndex;
     }
-    
+
     return totalSteps > 0 ? completedSteps / totalSteps : 0.0;
   }
 
@@ -644,43 +669,45 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   }
 
   int _getExerciseDuration(int baseDuration, [int? forRound]) {
-  // ✅ TEST MODE: Override with quick 5-second exercises
-  if (AppConfig.isTestingMode) {
-    return AppConfig.testExerciseDuration;
+    // ✅ TEST MODE: Override with quick 5-second exercises
+    if (AppConfig.isTestingMode) {
+      return AppConfig.testExerciseDuration;
+    }
+
+    // ✅ WARMUP & COOLDOWN: Always base - 5 (no round progression)
+    if (_currentPhase == 'warmup' || _currentPhase == 'cooldown') {
+      return (baseDuration - 5).clamp(5, 999); // Minimum 5 seconds
+    }
+
+    // ✅ MAIN WORKOUT: Progressive duration based on round
+    int round = forRound ?? _currentRound;
+
+    if (round == 1) {
+      return baseDuration;
+    } else if (round == 2) {
+      return baseDuration + 10;
+    } else {
+      return baseDuration + 15;
+    }
   }
-  
-  // ✅ WARMUP & COOLDOWN: Always base - 5 (no round progression)
-  if (_currentPhase == 'warmup' || _currentPhase == 'cooldown') {
-    return (baseDuration - 5).clamp(5, 999); // Minimum 5 seconds
-  }
-  
-  // ✅ MAIN WORKOUT: Progressive duration based on round
-  int round = forRound ?? _currentRound;
-  
-  if (round == 1) {
-    return baseDuration;
-  } else if (round == 2) {
-    return baseDuration + 10;
-  } else {
-    return baseDuration + 15;
-  }
-}
 
   int _calculateActualDuration() {
     if (_workoutStartTime != null) {
       final elapsed = DateTime.now().difference(_workoutStartTime!);
       return elapsed.inMinutes;
     }
-    
+
     return 0;
   }
 
   int _calculateActualCalories(int actualMinutes) {
-    if (widget.estimatedDuration != null && widget.estimatedCalories != null && widget.estimatedDuration! > 0) {
+    if (widget.estimatedDuration != null &&
+        widget.estimatedCalories != null &&
+        widget.estimatedDuration! > 0) {
       double ratio = actualMinutes / widget.estimatedDuration!;
       return (widget.estimatedCalories! * ratio).round();
     }
-    
+
     return actualMinutes * 6;
   }
 
@@ -695,9 +722,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
       final currentExercise = _exercises[_currentExerciseIndex];
       final adjustedDuration = _getExerciseDuration(currentExercise.duration);
       final remainingTime = adjustedDuration - _exerciseTime;
-      
+
       final timeToShow = remainingTime > 0 ? remainingTime : 0;
-      
+
       int minutes = timeToShow ~/ 60;
       int seconds = timeToShow.toInt() % 60;
       return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
@@ -711,9 +738,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: SafeArea(
-            child: _isLandscape
-                ? _buildLandscapeLayout()
-                : _buildPortraitLayout(),
+            child:
+                _isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
           ),
         );
       },
@@ -722,7 +748,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   Widget _buildPortraitLayout() {
     final currentExercise = _exercises[_currentExerciseIndex];
-    
+
     return Stack(
       children: [
         Column(
@@ -735,7 +761,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             _buildBottomSection(currentExercise),
           ],
         ),
-        
         if (_isGetReadyPhase && _countdown <= 3 && _countdown > 0)
           _buildCountdownOverlay(),
       ],
@@ -744,13 +769,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   Widget _buildLandscapeLayout() {
     final currentExercise = _exercises[_currentExerciseIndex];
-    
+
     return Stack(
       children: [
         Column(
           children: [
             _buildTopProgressBar(),
-            
             Expanded(
               child: Stack(
                 children: [
@@ -761,11 +785,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                         padding: const EdgeInsets.all(16),
                         child: _buildCircularProgress(currentExercise),
                       ),
-                      
                       Expanded(
                         child: _buildExerciseArea(),
                       ),
-                      
                       Container(
                         width: MediaQuery.of(context).size.width * 0.25,
                         child: Center(
@@ -801,7 +823,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                       ),
                     ],
                   ),
-                  
                   Positioned(
                     bottom: 24,
                     left: 0,
@@ -813,7 +834,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             ),
           ],
         ),
-        
         Positioned(
           top: 16,
           right: 16,
@@ -822,7 +842,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             onPressed: _toggleOrientation,
           ),
         ),
-        
         if (_isGetReadyPhase && _countdown <= 3 && _countdown > 0)
           _buildCountdownOverlay(),
       ],
@@ -836,14 +855,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         children: List.generate(_exercises.length, (index) {
           bool isCompleted = index < _currentExerciseIndex;
           bool isCurrent = index == _currentExerciseIndex;
-          
+
           return Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 0.5),
               decoration: BoxDecoration(
-                color: isCompleted 
+                color: isCompleted
                     ? const Color(0xFFE91E63)
-                    : isCurrent 
+                    : isCurrent
                         ? const Color(0xFFE91E63).withOpacity(0.5)
                         : const Color(0xFFE0E0E0),
               ),
@@ -864,9 +883,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             icon: Icons.chevron_left,
             onPressed: _showExitDialog,
           ),
-          
           const Spacer(),
-          
           Column(
             children: [
               _buildCircularButton(
@@ -889,10 +906,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   });
                   _videoController?.pause(); // ✅ ADD THIS LINE
                   _audioController.setWorkoutPaused(true);
-                  
+
                   final exercise = currentExercise;
                   Exercise? exerciseDetails;
-                  
+
                   // ✅ For discovery workouts with full details, use them directly (INSTANT)
                   if (widget.fullWorkoutSets != null) {
                     for (var set in widget.fullWorkoutSets!) {
@@ -906,24 +923,26 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                       if (exerciseDetails != null) break;
                     }
                   }
-                  
+
                   // Fallback: fetch from API if not found (for plan workouts)
                   if (exerciseDetails == null) {
                     print('📡 Fetching from API...');
-                    exerciseDetails = await _fetchExerciseDetails(exercise.name);
+                    exerciseDetails =
+                        await _fetchExerciseDetails(exercise.name);
                   }
-                  
+
                   if (context.mounted) {
                     await ExerciseDetailSheet.show(
                       context,
-                      exercise: exerciseDetails ?? Exercise(
-                        name: exercise.name,
-                        duration: exercise.duration,
-                        actionSteps: ['Exercise details not available'],
-                      ),
+                      exercise: exerciseDetails ??
+                          Exercise(
+                            name: exercise.name,
+                            duration: exercise.duration,
+                            actionSteps: ['Exercise details not available'],
+                          ),
                     );
                   }
-                  
+
                   setState(() {
                     _isPaused = false;
                   });
@@ -987,7 +1006,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   Widget _buildCountdownOverlay() {
     int displayNumber = _countdown.ceil();
     String displayText = displayNumber > 0 ? '$displayNumber' : 'GO!';
-    
+
     return Container(
       color: Colors.black.withOpacity(0.3),
       child: Center(
@@ -1032,40 +1051,42 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             child: Column(
               children: [
                 Text(
-                    _isGetReadyPhase 
-                        ? 'Get Ready' 
+                  _isGetReadyPhase
+                      ? 'Get Ready'
+                      : _isRoundRestPhase
+                          ? '${_restTime.ceil()}'
+                          : _isRestPhase
+                              ? 'Rest'
+                              : _getTimerDisplay(),
+                  style: GoogleFonts.poppins(
+                    fontSize: _isGetReadyPhase || _isRestPhase
+                        ? 32
                         : _isRoundRestPhase
-                            ? '${_restTime.ceil()}'
-                            : _isRestPhase
-                                ? 'Rest'
-                                : _getTimerDisplay(),
-                    style: GoogleFonts.poppins(
-                      fontSize: _isGetReadyPhase || _isRestPhase ? 32 : _isRoundRestPhase ? 72 : 56,
-                      fontWeight: FontWeight.w800,
-                      color: _isRoundRestPhase ? const Color(0xFFE91E63) : Colors.black,
-                      height: 1.1,
-                    ),
-                    textAlign: TextAlign.center,
+                            ? 72
+                            : 56,
+                    fontWeight: FontWeight.w800,
+                    color: _isRoundRestPhase
+                        ? const Color(0xFFE91E63)
+                        : Colors.black,
+                    height: 1.1,
                   ),
-                
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 8),
-                
-                  Text(
-                    _isRoundRestPhase 
-                        ? 'Round $_currentRound Complete!'
-                        : exercise.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: _isRoundRestPhase ? 18 : 22,
-                      fontWeight: FontWeight.w600,
-                      color: _isRoundRestPhase ? Colors.grey[600] : Colors.black,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                
-                const SizedBox(height: 4),
-                
                 Text(
-                  _currentPhase == 'warmup' 
+                  _isRoundRestPhase
+                      ? 'Round $_currentRound Complete!'
+                      : exercise.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: _isRoundRestPhase ? 18 : 22,
+                    fontWeight: FontWeight.w600,
+                    color: _isRoundRestPhase ? Colors.grey[600] : Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _currentPhase == 'warmup'
                       ? 'WARM UP • EXERCISE ${_currentExerciseIndex + 1}/${_warmupExercises.length}'
                       : _currentPhase == 'main'
                           ? 'ROUND $_currentRound/$_totalRounds • EXERCISE ${_currentExerciseIndex + 1}/${_mainExercises.length}'
@@ -1080,7 +1101,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               ],
             ),
           ),
-          
           _buildThickControlBar(),
         ],
       ),
@@ -1089,7 +1109,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   Widget _buildThickControlBar() {
     final progress = _getCurrentProgress();
-    
+
     if (_isRoundRestPhase) {
       return Container(
         height: 56,
@@ -1123,9 +1143,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                 ),
               ),
             ),
-            
             const SizedBox(width: 12),
-            
             Expanded(
               child: ElevatedButton(
                 onPressed: _skipRoundRest,
@@ -1150,7 +1168,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         ),
       );
     }
-    
+
     return Container(
       height: 56,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -1163,7 +1181,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               height: 56,
               color: const Color(0xFFE0E0E0),
             ),
-            
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 100),
               curve: Curves.linear,
@@ -1182,7 +1199,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                 );
               },
             ),
-            
             Row(
               children: [
                 Expanded(
@@ -1205,7 +1221,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                     ),
                   ),
                 ),
-                
                 Expanded(
                   flex: 4,
                   child: Material(
@@ -1215,7 +1230,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                       child: Container(
                         alignment: Alignment.center,
                         child: Icon(
-                          _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                          _isPaused
+                              ? Icons.play_arrow_rounded
+                              : Icons.pause_rounded,
                           color: Colors.white,
                           size: 28,
                         ),
@@ -1223,7 +1240,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                     ),
                   ),
                 ),
-                
                 Expanded(
                   flex: 3,
                   child: Material(
@@ -1254,7 +1270,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   Widget _buildCircularProgress(WorkoutExercise exercise) {
     final progress = _getCurrentProgress();
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1272,7 +1288,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   strokeWidth: 10,
                 ),
               ),
-              
               CustomPaint(
                 size: const Size(120, 120),
                 painter: _CircularProgressPainter(
@@ -1281,7 +1296,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   strokeWidth: 10,
                 ),
               ),
-              
               GestureDetector(
                 onTap: _togglePause,
                 child: Container(
@@ -1301,9 +1315,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
             ],
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         Text(
           exercise.name,
           style: GoogleFonts.poppins(
@@ -1313,11 +1325,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           ),
           textAlign: TextAlign.center,
         ),
-        
         const SizedBox(height: 4),
-        
         Text(
-          _currentPhase == 'warmup' 
+          _currentPhase == 'warmup'
               ? 'WARM UP • EXERCISE ${_currentExerciseIndex + 1}/${_warmupExercises.length}'
               : _currentPhase == 'main'
                   ? 'ROUND $_currentRound/$_totalRounds • EXERCISE ${_currentExerciseIndex + 1}/${_mainExercises.length}'
@@ -1358,7 +1368,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               ),
             ),
           ),
-          
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -1390,7 +1399,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     });
     _videoController?.pause(); // ✅ ADD THIS LINE
     _audioController.setWorkoutPaused(true);
-    
+
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -1404,15 +1413,15 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         final blurAnimation = Tween<double>(begin: 0, end: 5).animate(
           CurvedAnimation(parent: animation, curve: Curves.easeOut),
         );
-        
+
         final scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
           CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
         );
-        
+
         final fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
           CurvedAnimation(parent: animation, curve: Curves.easeOut),
         );
-        
+
         return Stack(
           children: [
             BackdropFilter(
@@ -1424,7 +1433,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                 color: Colors.white.withOpacity(0.2),
               ),
             ),
-            
             Center(
               child: FadeTransition(
                 opacity: fadeAnimation,
@@ -1443,7 +1451,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   Widget _buildPauseDialogContent() {
     final currentExercise = _exercises[_currentExerciseIndex];
     final remainingExercises = _exercises.length - _currentExerciseIndex;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
@@ -1461,9 +1469,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 48),
-          
           TweenAnimationBuilder<double>(
-            key: ValueKey('fire_pulse_${DateTime.now().millisecondsSinceEpoch}'),
+            key:
+                ValueKey('fire_pulse_${DateTime.now().millisecondsSinceEpoch}'),
             duration: const Duration(milliseconds: 1200),
             tween: Tween(begin: 0.95, end: 1.05),
             curve: Curves.easeInOut,
@@ -1502,9 +1510,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               }
             },
           ),
-          
           const SizedBox(height: 28),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -1519,9 +1525,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               textAlign: TextAlign.center,
             ),
           ),
-          
           const SizedBox(height: 12),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -1536,9 +1540,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               textAlign: TextAlign.center,
             ),
           ),
-          
           const SizedBox(height: 40),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SizedBox(
@@ -1573,15 +1575,13 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               ),
             ),
           ),
-          
           const SizedBox(height: 16),
-          
           TextButton(
             onPressed: () {
               _timer?.cancel();
               _audioController.stopBackgroundMusic();
               Navigator.pop(context);
-              
+
               _showPartialWorkoutCompleteDialog();
             },
             style: TextButton.styleFrom(
@@ -1600,7 +1600,6 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               ),
             ),
           ),
-          
           const SizedBox(height: 28),
         ],
       ),
@@ -1610,11 +1609,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   void _showPartialWorkoutCompleteDialog() async {
     _timer?.cancel();
     _audioController.stopBackgroundMusic();
-    
-    final completedExercises = _isGetReadyPhase 
-        ? _currentExerciseIndex 
-        : _currentExerciseIndex + 1;
-    
+
+    final completedExercises =
+        _isGetReadyPhase ? _currentExerciseIndex : _currentExerciseIndex + 1;
+
     int partialExerciseTime = 0;
     for (int i = 0; i < completedExercises && i < _exercises.length; i++) {
       partialExerciseTime += _getExerciseDuration(_exercises[i].duration);
@@ -1627,20 +1625,21 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
     final actualTotalMinutes = _calculateActualDuration();
     final actualTotalCalories = _calculateActualCalories(actualTotalMinutes);
-    final totalCalories = actualTotalMinutes > 0 
+    final totalCalories = actualTotalMinutes > 0
         ? ((actualTotalCalories * totalMinutes) / actualTotalMinutes).round()
         : totalMinutes * 6;
-    
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutCompleteScreen(
+      PageTransitions.fade(
+        WorkoutCompleteScreen(
           dayNumber: widget.dayNumber,
           totalCalories: totalCalories,
           totalMinutes: totalMinutes,
           totalActions: totalActions,
-          workoutName: widget.dayNumber == 0 
-              ? (widget.discoveryWorkoutTitle ?? 'Discovery Workout (Incomplete)')
+          workoutName: widget.dayNumber == 0
+              ? (widget.discoveryWorkoutTitle ??
+                  'Discovery Workout (Incomplete)')
               : 'Day ${widget.dayNumber} Workout (Incomplete)',
           earnedAchievement: null,
           isPartialWorkout: widget.dayNumber != 0,
@@ -1650,67 +1649,69 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           discoveryCategory: widget.discoveryCategory,
           fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD THIS
         ),
+        durationMs: 300,
       ),
     );
   }
 
   void _showWorkoutCompleteDialog() async {
-  _timer?.cancel();
-  
-  await _audioController.stopBackgroundMusic();
-  _audioController.stopCurrentSpeech();
-  _audioController.setWorkoutPaused(false);
-  
-  await Future.delayed(const Duration(milliseconds: 100));
-  
-  final totalMinutes = _calculateActualDuration();
-  final totalCalories = _calculateActualCalories(totalMinutes);
-  final totalActions = _exercises.length * _totalRounds;
-  
-  // ✅ PRODUCTION CONFIGURATION with test override
-  final estimatedMinutes = AppConfig.isTestingMode 
-      ? AppConfig.minimumWorkoutDuration 
-      : (widget.estimatedDuration ?? 20);
-      
-  final minimumMinutes = (estimatedMinutes * AppConfig.qualityThreshold).ceil();
+    _timer?.cancel();
 
-  // For discovery workouts (dayNumber = 0), always treat as quality if any time recorded
-  final isQualityWorkout = widget.dayNumber == 0 
-      ? totalMinutes > 0  // Discovery: just needs some time
-      : totalMinutes >= minimumMinutes;  // Plan: needs quality threshold
+    await _audioController.stopBackgroundMusic();
+    _audioController.stopCurrentSpeech();
+    _audioController.setWorkoutPaused(false);
 
-  if (AppConfig.isTestingMode) {
-    print('${AppConfig.modeLabel} - Workout check bypassed');
-  }
+    await Future.delayed(const Duration(milliseconds: 100));
 
-  print('⏱️ Workout duration check:');
-  print('   Estimated: $estimatedMinutes min');
-  print('   Actual: $totalMinutes min');
-  print('   Minimum required: $minimumMinutes min');
-  print('   Quality workout: $isQualityWorkout');
+    final totalMinutes = _calculateActualDuration();
+    final totalCalories = _calculateActualCalories(totalMinutes);
+    final totalActions = _exercises.length * _totalRounds;
 
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => WorkoutCompleteScreen(
-        dayNumber: widget.dayNumber,
-        totalCalories: totalCalories,
-        totalMinutes: totalMinutes,
-        totalActions: totalActions,
-        workoutName: widget.dayNumber == 0 
-            ? (widget.discoveryWorkoutTitle ?? 'Discovery Workout')
-            : 'Day ${widget.dayNumber} Workout',
-        earnedAchievement: null,
-        isPartialWorkout: !isQualityWorkout,
-        exercises: widget.exercises,
-        discoveryWorkoutId: widget.discoveryWorkoutId,
-        discoveryWorkoutTitle: widget.discoveryWorkoutTitle,
-        discoveryCategory: widget.discoveryCategory,
-        fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD THIS
+    // ✅ PRODUCTION CONFIGURATION with test override
+    final estimatedMinutes = AppConfig.isTestingMode
+        ? AppConfig.minimumWorkoutDuration
+        : (widget.estimatedDuration ?? 20);
+
+    final minimumMinutes =
+        (estimatedMinutes * AppConfig.qualityThreshold).ceil();
+
+    // For discovery workouts (dayNumber = 0), always treat as quality if any time recorded
+    final isQualityWorkout = widget.dayNumber == 0
+        ? totalMinutes > 0 // Discovery: just needs some time
+        : totalMinutes >= minimumMinutes; // Plan: needs quality threshold
+
+    if (AppConfig.isTestingMode) {
+      print('${AppConfig.modeLabel} - Workout check bypassed');
+    }
+
+    print('⏱️ Workout duration check:');
+    print('   Estimated: $estimatedMinutes min');
+    print('   Actual: $totalMinutes min');
+    print('   Minimum required: $minimumMinutes min');
+    print('   Quality workout: $isQualityWorkout');
+
+    Navigator.pushReplacement(
+      context,
+      PageTransitions.scale(
+        WorkoutCompleteScreen(
+          dayNumber: widget.dayNumber,
+          totalCalories: totalCalories,
+          totalMinutes: totalMinutes,
+          totalActions: totalActions,
+          workoutName: widget.dayNumber == 0
+              ? (widget.discoveryWorkoutTitle ?? 'Discovery Workout')
+              : 'Day ${widget.dayNumber} Workout',
+          earnedAchievement: null,
+          isPartialWorkout: !isQualityWorkout,
+          exercises: widget.exercises,
+          discoveryWorkoutId: widget.discoveryWorkoutId,
+          discoveryWorkoutTitle: widget.discoveryWorkoutTitle,
+          discoveryCategory: widget.discoveryCategory,
+          fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD THIS
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _CircularProgressPainter extends CustomPainter {

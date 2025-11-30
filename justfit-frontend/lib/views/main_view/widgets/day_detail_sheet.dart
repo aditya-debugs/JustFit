@@ -9,7 +9,6 @@ import '../../../data/models/workout/workout_set_model.dart';
 import '../../../data/models/workout/exercise_model.dart';
 import '../../../data/models/workout/simple_workout_models.dart'; // ✅ ADDED
 
-
 class DayDetailScreen extends StatefulWidget {
   final int dayNumber;
   final int duration;
@@ -287,17 +286,19 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Future<Exercise?> _fetchExerciseDetailsForCard(Exercise exercise) async {
     try {
       final exerciseId = exercise.name.toLowerCase().replaceAll(' ', '-');
-      
+
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/workout/exercise-details'),
+        Uri.parse('https://justfit.onrender.com/api/workout/exercise-details'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'exerciseIds': [exerciseId]}),
+        body: jsonEncode({
+          'exerciseIds': [exerciseId]
+        }),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final exercises = data['exercises'] as List;
-        
+
         if (exercises.isNotEmpty) {
           final exerciseData = exercises[0];
           return Exercise(
@@ -305,9 +306,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             duration: exercise.duration,
             thumbnailPath: exercise.thumbnailPath,
             actionSteps: List<String>.from(exerciseData['actionSteps'] ?? []),
-            breathingRhythm: List<String>.from(exerciseData['breathingRhythm'] ?? []),
-            actionFeeling: List<String>.from(exerciseData['actionFeeling'] ?? []),
-            commonMistakes: List<String>.from(exerciseData['commonMistakes'] ?? []),
+            breathingRhythm:
+                List<String>.from(exerciseData['breathingRhythm'] ?? []),
+            actionFeeling:
+                List<String>.from(exerciseData['actionFeeling'] ?? []),
+            commonMistakes:
+                List<String>.from(exerciseData['commonMistakes'] ?? []),
           );
         }
       }
@@ -367,7 +371,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
   Widget _buildWorkoutSets(BuildContext context) {
     return Column(
-      children: widget.workoutSets.map((set) => _buildWorkoutSet(context, set)).toList(),
+      children: widget.workoutSets
+          .map((set) => _buildWorkoutSet(context, set))
+          .toList(),
     );
   }
 
@@ -388,7 +394,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               ),
             ),
           ),
-          ...set.exercises.map((exercise) => _buildExerciseCard(context, exercise)).toList(),
+          ...set.exercises
+              .map((exercise) => _buildExerciseCard(context, exercise))
+              .toList(),
         ],
       ),
     );
@@ -408,11 +416,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 child: CircularProgressIndicator(color: Colors.pink),
               ),
             );
-            
-            final detailedExercise = await _fetchExerciseDetailsForCard(exercise);
-            
+
+            final detailedExercise =
+                await _fetchExerciseDetailsForCard(exercise);
+
             if (context.mounted) Navigator.pop(context);
-            
+
             if (context.mounted) {
               ExerciseDetailSheet.show(
                 context,
@@ -550,49 +559,53 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
-void _navigateToPreWorkout(BuildContext context) {
-  List<WorkoutExercise> exercises = [];
-  
-  if (widget.workoutSetsData != null && widget.workoutSetsData!.isNotEmpty) {
-    for (var workoutSet in widget.workoutSetsData!) {
-      for (var exercise in workoutSet.exercises) {
-        exercises.add(WorkoutExercise(
-          name: exercise.exerciseName,
-          duration: exercise.duration ?? 30,
-          sets: exercise.sets ?? 3,
-          reps: exercise.reps ?? 12,
-          rest: exercise.restAfter ?? 60,
-          setType: workoutSet.setType.toString().split('.').last,  // Convert enum to string
-        ));
+  void _navigateToPreWorkout(BuildContext context) {
+    List<WorkoutExercise> exercises = [];
+
+    if (widget.workoutSetsData != null && widget.workoutSetsData!.isNotEmpty) {
+      for (var workoutSet in widget.workoutSetsData!) {
+        for (var exercise in workoutSet.exercises) {
+          exercises.add(WorkoutExercise(
+            name: exercise.exerciseName,
+            duration: exercise.duration ?? 30,
+            sets: exercise.sets ?? 3,
+            reps: exercise.reps ?? 12,
+            rest: exercise.restAfter ?? 60,
+            setType: workoutSet.setType
+                .toString()
+                .split('.')
+                .last, // Convert enum to string
+          ));
+        }
       }
     }
-  }
-  
-  // ✅ ADD THIS DEBUG BLOCK HERE (after line 532, before line 534)
-  print('🔍 DEBUG: Total exercises being passed: ${exercises.length}');
-  print('🔍 DEBUG: Total workout sets: ${widget.workoutSetsData?.length ?? 0}');
-  for (var i = 0; i < exercises.length; i++) {
-    print('  📋 Exercise ${i + 1}: ${exercises[i].name}, Duration: ${exercises[i].duration}s, Sets/Rounds: ${exercises[i].sets}');
-  }
-  
-  // Always navigate with exercises (whether they exist or not)
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PreWorkoutScreen(
-        dayNumber: widget.dayNumber,
-        duration: widget.duration,
-        calories: widget.calories,
-        exercises: exercises,
+
+    // ✅ ADD THIS DEBUG BLOCK HERE (after line 532, before line 534)
+    print('🔍 DEBUG: Total exercises being passed: ${exercises.length}');
+    print(
+        '🔍 DEBUG: Total workout sets: ${widget.workoutSetsData?.length ?? 0}');
+    for (var i = 0; i < exercises.length; i++) {
+      print(
+          '  📋 Exercise ${i + 1}: ${exercises[i].name}, Duration: ${exercises[i].duration}s, Sets/Rounds: ${exercises[i].sets}');
+    }
+
+    // Always navigate with exercises (whether they exist or not)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PreWorkoutScreen(
+          dayNumber: widget.dayNumber,
+          duration: widget.duration,
+          calories: widget.calories,
+          exercises: exercises,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-
-    void _showLockedWorkoutDialog(BuildContext context, int lockedDayNumber) {
+  void _showLockedWorkoutDialog(BuildContext context, int lockedDayNumber) {
     final previousDayNumber = lockedDayNumber - 1;
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -615,9 +628,9 @@ void _navigateToPreWorkout(BuildContext context) {
                   constraints: const BoxConstraints(),
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Title
               Text(
                 'Take it easy!',
@@ -628,9 +641,9 @@ void _navigateToPreWorkout(BuildContext context) {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Message
               Text(
                 'Don\'t rush! Please complete previous days workout first!',
@@ -641,9 +654,9 @@ void _navigateToPreWorkout(BuildContext context) {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Day image placeholder
               Container(
                 width: 180,
@@ -682,9 +695,9 @@ void _navigateToPreWorkout(BuildContext context) {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Start Day button
               SizedBox(
                 width: double.infinity,
@@ -721,33 +734,33 @@ void _navigateToPreWorkout(BuildContext context) {
   }
 
   // ========== INTENSITY & CYCLE AWARENESS ==========
-  
+
   /// Returns intensity badge color based on workout intensity
   Color _getIntensityBadgeColor(String intensity) {
-    if (intensity.toLowerCase().contains('gentle') || 
+    if (intensity.toLowerCase().contains('gentle') ||
         intensity.toLowerCase().contains('light')) {
       return const Color(0xFFE8D5F2); // Light purple for gentle
-    } else if (intensity.toLowerCase().contains('high') || 
-               intensity.toLowerCase().contains('peak')) {
+    } else if (intensity.toLowerCase().contains('high') ||
+        intensity.toLowerCase().contains('peak')) {
       return const Color(0xFFFFE5E5); // Light red for high
     } else {
       return const Color(0xFFE3F2FD); // Light blue for moderate
     }
   }
-  
+
   /// Returns appropriate icon for intensity level
   IconData _getIntensityIcon(String intensity) {
-    if (intensity.toLowerCase().contains('gentle') || 
+    if (intensity.toLowerCase().contains('gentle') ||
         intensity.toLowerCase().contains('light')) {
       return Icons.favorite;
-    } else if (intensity.toLowerCase().contains('high') || 
-               intensity.toLowerCase().contains('peak')) {
+    } else if (intensity.toLowerCase().contains('high') ||
+        intensity.toLowerCase().contains('peak')) {
       return Icons.local_fire_department;
     } else {
       return Icons.fitness_center;
     }
   }
-  
+
   /// Builds intensity badge widget (shown for ALL users)
   Widget _buildIntensityBadge(String intensity) {
     return Padding(
@@ -784,26 +797,27 @@ void _navigateToPreWorkout(BuildContext context) {
       ),
     );
   }
-  
+
   /// Checks if user has menstrual cycle sync enabled
   bool _hasCycleSync() {
     // Check if intensity contains cycle phase indicators
     return widget.intensity.contains('Menstruation') ||
-           widget.intensity.contains('Follicular') ||
-           widget.intensity.contains('Ovulation') ||
-           widget.intensity.contains('Luteal') ||
-           widget.intensity.contains('PMS');
+        widget.intensity.contains('Follicular') ||
+        widget.intensity.contains('Ovulation') ||
+        widget.intensity.contains('Luteal') ||
+        widget.intensity.contains('PMS');
   }
-  
+
   /// Returns cycle phase emoji based on intensity
   String _getCycleEmoji(String intensity) {
     if (intensity.contains('Menstruation')) return '🩸';
     if (intensity.contains('Follicular')) return '⚡';
-    if (intensity.contains('Ovulation') || intensity.contains('Peak')) return '🌟';
+    if (intensity.contains('Ovulation') || intensity.contains('Peak'))
+      return '🌟';
     if (intensity.contains('Luteal') || intensity.contains('PMS')) return '🌙';
     return '';
   }
-  
+
   /// Returns motivational message based on intensity
   /// Generic messages for non-synced users, cycle-specific for synced users
   String _getMotivationalMessage(String intensity) {
@@ -817,9 +831,9 @@ void _navigateToPreWorkout(BuildContext context) {
     } else if (intensity.contains('Luteal') || intensity.contains('PMS')) {
       return 'Steady and consistent wins. Focus on quality over intensity today.';
     }
-    
+
     // Generic messages for non-synced users (based on intensity level)
-    if (intensity.toLowerCase().contains('gentle') || 
+    if (intensity.toLowerCase().contains('gentle') ||
         intensity.toLowerCase().contains('light')) {
       return 'Light and gentle movement today. Perfect for active recovery!';
     } else if (intensity.toLowerCase().contains('high')) {
@@ -828,14 +842,16 @@ void _navigateToPreWorkout(BuildContext context) {
       return 'Balanced workout ahead. Stay focused and give it your best!';
     }
   }
-  
+
   /// Builds motivational message widget (shown for ALL users)
   Widget _buildMotivationalMessage() {
     String emoji = _hasCycleSync() ? _getCycleEmoji(widget.intensity) : '💪';
     String message = _getMotivationalMessage(widget.intensity);
-    Color bgColor = _hasCycleSync() ? const Color(0xFFFFF5F8) : const Color(0xFFF5F9FF);
-    Color borderColor = _hasCycleSync() ? const Color(0xFFFFE0E8) : const Color(0xFFE0EEFF);
-    
+    Color bgColor =
+        _hasCycleSync() ? const Color(0xFFFFF5F8) : const Color(0xFFF5F9FF);
+    Color borderColor =
+        _hasCycleSync() ? const Color(0xFFFFE0E8) : const Color(0xFFE0EEFF);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -958,40 +974,44 @@ class ExerciseDetailSheet {
                       const SizedBox(height: 24),
                       _buildSection(
                         title: 'Action Steps:',
-                        items: exercise.actionSteps ?? [
-                          'Stand with feet shoulder-width apart',
-                          'Keep your core engaged and back straight',
-                          'Perform the movement in a controlled manner',
-                          'Maintain steady breathing throughout',
-                        ],
+                        items: exercise.actionSteps ??
+                            [
+                              'Stand with feet shoulder-width apart',
+                              'Keep your core engaged and back straight',
+                              'Perform the movement in a controlled manner',
+                              'Maintain steady breathing throughout',
+                            ],
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
                         title: 'Breathing Rhythm:',
-                        items: exercise.breathingRhythm ?? [
-                          'Inhale: During the preparation phase',
-                          'Exhale: During the active movement',
-                          'Keep breathing steady and controlled',
-                        ],
+                        items: exercise.breathingRhythm ??
+                            [
+                              'Inhale: During the preparation phase',
+                              'Exhale: During the active movement',
+                              'Keep breathing steady and controlled',
+                            ],
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
                         title: 'Action Feeling:',
-                        items: exercise.actionFeeling ?? [
-                          'You should feel tension in the target muscle group',
-                          'No pain or sharp discomfort',
-                          'Controlled burn sensation is normal',
-                        ],
+                        items: exercise.actionFeeling ??
+                            [
+                              'You should feel tension in the target muscle group',
+                              'No pain or sharp discomfort',
+                              'Controlled burn sensation is normal',
+                            ],
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
                         title: 'Common Mistakes:',
-                        items: exercise.commonMistakes ?? [
-                          'Avoid holding your breath',
-                          'Don\'t rush through the movement',
-                          'Keep your core engaged at all times',
-                          'Don\'t overextend beyond your comfort zone',
-                        ],
+                        items: exercise.commonMistakes ??
+                            [
+                              'Avoid holding your breath',
+                              'Don\'t rush through the movement',
+                              'Keep your core engaged at all times',
+                              'Don\'t overextend beyond your comfort zone',
+                            ],
                       ),
                       const SizedBox(height: 100),
                     ],
@@ -1051,7 +1071,8 @@ class ExerciseDetailSheet {
     );
   }
 
-  static Widget _buildSection({required String title, required List<String> items}) {
+  static Widget _buildSection(
+      {required String title, required List<String> items}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1064,33 +1085,35 @@ class ExerciseDetailSheet {
           ),
         ),
         const SizedBox(height: 8),
-        ...items.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 8, left: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '• ',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  item,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey[700],
-                    height: 1.5,
+        ...items
+            .map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '• ',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[700],
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        )).toList(),
+                ))
+            .toList(),
       ],
     );
   }

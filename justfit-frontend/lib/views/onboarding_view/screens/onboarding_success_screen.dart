@@ -26,7 +26,8 @@ class OnboardingSuccessScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<OnboardingSuccessScreen> createState() => _OnboardingSuccessScreenState();
+  State<OnboardingSuccessScreen> createState() =>
+      _OnboardingSuccessScreenState();
 }
 
 class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
@@ -37,10 +38,10 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
 
   late PageController _pageController;
   Timer? _autoScrollTimer;
-  
+
   // Get controller instance
   late final OnboardingController _controller;
-  
+
   // Sample profile images - you can replace with actual asset paths
   final List<String> _profileImages = [
     'assets/images/onboarding/profile_1.png',
@@ -54,7 +55,7 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize controller
     _controller = Get.find<OnboardingController>();
 
@@ -84,11 +85,25 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
       initialPage: 1000,
     );
 
-    // Auto-scroll timer
-    _startAutoScroll();
+    // Start auto-scroll immediately after a tiny delay to ensure page controller is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoScroll();
+    });
   }
 
   void _startAutoScroll() {
+    // Start immediately, then repeat every 2 seconds
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_pageController.hasClients) {
+        final nextPage = _pageController.page!.round() + 1;
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (_pageController.hasClients) {
         final nextPage = _pageController.page!.round() + 1;
@@ -155,7 +170,7 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
           ),
         ),
         const SizedBox(height: 50),
-        
+
         // Rotating profile carousel - Full width
         SizedBox(
           width: double.infinity,
@@ -168,9 +183,9 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
             },
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // User count text
         Text(
           '1,000,000+ JustFit users',
@@ -180,9 +195,9 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
             color: Colors.grey[600],
           ),
         ),
-        
+
         const SizedBox(height: 60),
-        
+
         // Statistics section
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -212,9 +227,9 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
             ),
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Description text
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -237,14 +252,14 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
     return AnimatedBuilder(
       animation: _pageController,
       builder: (context, child) {
-        double value = 1.0;
-        double scale = 1.0;
-        
+        double scale = 0.6; // Default to small size
+
         if (_pageController.position.haveDimensions) {
-          final page = _pageController.page ?? 0;
+          final page =
+              _pageController.page ?? _pageController.initialPage.toDouble();
           // Calculate distance from center
           final diff = (page - index).abs();
-          
+
           // Scale based on position - center is largest, sides are smaller
           if (diff < 1) {
             // This is the center or very close to center
@@ -253,14 +268,20 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
             // Far from center
             scale = 0.6;
           }
-          
+
           // Smooth the scale transition
           scale = scale.clamp(0.6, 1.0);
+        } else {
+          // Before position has dimensions, calculate based on initialPage
+          final diff = (_pageController.initialPage - index).abs();
+          if (diff < 1) {
+            scale = 1.0 - (diff * 0.4);
+          } else {
+            scale = 0.6;
+          }
+          scale = scale.clamp(0.6, 1.0);
         }
-        
-        // Larger size for center, smaller for sides
-        final size = 120.0 * scale;
-        
+
         return Center(
           child: Transform.scale(
             scale: scale,

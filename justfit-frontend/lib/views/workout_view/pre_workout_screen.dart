@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../common_widgets/heart_rate_gauge.dart';
 import 'heart_rate_measure_screen.dart';
 import 'active_workout_screen.dart';
+import '../../core/animations/page_transitions.dart';
 import '../../data/models/workout/workout_exercise.dart';
 import '../../data/models/workout/simple_workout_models.dart'; // ✅ ADD THIS
 
@@ -307,8 +308,8 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
   void _navigateToHeartRateMeasure() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => HeartRateMeasureScreen(
+      PageTransitions.fade(
+        HeartRateMeasureScreen(
           dayNumber: widget.dayNumber,
           duration: widget.duration,
           calories: widget.calories,
@@ -318,6 +319,7 @@ class _PreWorkoutScreenState extends State<PreWorkoutScreen>
           discoveryCategory: widget.discoveryCategory, // ✅ ADD
           fullWorkoutSets: widget.fullWorkoutSets, // ✅ ADD
         ),
+        durationMs: 300,
       ),
     );
   }

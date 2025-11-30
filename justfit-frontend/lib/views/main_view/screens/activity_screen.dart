@@ -892,10 +892,14 @@ class _ActivityScreenState extends State<ActivityScreen>
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.grey,
-                size: 24,
+              Icon(
+                workout['isComplete'] == true
+                    ? Icons.check_circle
+                    : Icons.access_time,
+                color: workout['isComplete'] == true
+                    ? Colors.green
+                    : Colors.orange,
+                size: 28,
               ),
             ],
           ),

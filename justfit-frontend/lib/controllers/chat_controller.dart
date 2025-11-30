@@ -20,37 +20,37 @@ class ChatMessage {
   }) : timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-    'role': role,
-    'content': content,
-    'timestamp': timestamp.toIso8601String(),
-    // Don't save 'isNew' - it's only for UI state
-  };
+        'role': role,
+        'content': content,
+        'timestamp': timestamp.toIso8601String(),
+        // Don't save 'isNew' - it's only for UI state
+      };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-    role: json['role'],
-    content: json['content'],
-    timestamp: DateTime.parse(json['timestamp']),
-    isNew: false, // ✅ Loaded messages are not new
-  );
+        role: json['role'],
+        content: json['content'],
+        timestamp: DateTime.parse(json['timestamp']),
+        isNew: false, // ✅ Loaded messages are not new
+      );
 
   Map<String, dynamic> toFirestore() => {
-    'role': role,
-    'content': content,
-    'timestamp': Timestamp.fromDate(timestamp),
-  };
+        'role': role,
+        'content': content,
+        'timestamp': Timestamp.fromDate(timestamp),
+      };
 
   factory ChatMessage.fromFirestore(Map<String, dynamic> data) => ChatMessage(
-  role: data['role'],
-  content: data['content'],
-  timestamp: (data['timestamp'] as Timestamp).toDate(),
-  isNew: false, // ✅ Loaded from Firestore = not new
-);
+        role: data['role'],
+        content: data['content'],
+        timestamp: (data['timestamp'] as Timestamp).toDate(),
+        isNew: false, // ✅ Loaded from Firestore = not new
+      );
 }
 
 class ChatController extends GetxController {
   final UserService _userService = Get.find<UserService>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   RxList<ChatMessage> messages = <ChatMessage>[].obs;
   RxBool isLoading = false.obs;
   RxBool isTyping = false.obs;
@@ -61,7 +61,7 @@ class ChatController extends GetxController {
     '🎯 Modify my plan',
   ].obs;
 
-  static const String _baseUrl = 'http://10.0.2.2:8000/api';
+  static const String _baseUrl = 'https://justfit.onrender.com';
   static const int _maxMessagesInCache = 100;
   static const int _maxMessagesInFirestore = 200;
 
@@ -101,19 +101,19 @@ class ChatController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final userId = _userService.currentUser.value?.uid ?? 'guest';
       final cacheKey = 'chat_cache_$userId';
-      
+
       print('   🔑 Cache key: $cacheKey');
-      
+
       final cachedJson = prefs.getString(cacheKey);
 
       if (cachedJson != null) {
         final List<dynamic> cachedData = jsonDecode(cachedJson);
-        messages.value = cachedData
-            .map((json) => ChatMessage.fromJson(json))
-            .toList();
-        
+        messages.value =
+            cachedData.map((json) => ChatMessage.fromJson(json)).toList();
+
         final duration = DateTime.now().difference(startTime).inMilliseconds;
-        print('   ✅ Loaded ${messages.length} messages from cache in ${duration}ms');
+        print(
+            '   ✅ Loaded ${messages.length} messages from cache in ${duration}ms');
       } else {
         print('   ℹ️ No cache found, adding welcome message');
         _addWelcomeMessage();
@@ -136,7 +136,7 @@ class ChatController extends GetxController {
 
     try {
       print('   ☁️ Fetching from Firestore for user: $userId');
-      
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -152,7 +152,8 @@ class ChatController extends GetxController {
             .map((doc) => ChatMessage.fromFirestore(doc.data()))
             .toList();
 
-        print('   📊 Firestore returned ${firestoreMessages.length} messages in ${duration}ms');
+        print(
+            '   📊 Firestore returned ${firestoreMessages.length} messages in ${duration}ms');
 
         if (firestoreMessages.length > messages.length) {
           messages.value = firestoreMessages;
@@ -184,9 +185,10 @@ class ChatController extends GetxController {
 
       final cacheData = messagesToCache.map((m) => m.toJson()).toList();
       await prefs.setString(cacheKey, jsonEncode(cacheData));
-      
+
       final duration = DateTime.now().difference(startTime).inMilliseconds;
-      print('   💾 Saved ${messagesToCache.length} messages to cache in ${duration}ms');
+      print(
+          '   💾 Saved ${messagesToCache.length} messages to cache in ${duration}ms');
     } catch (e) {
       print('   ⚠️ Cache save failed: $e');
     }
@@ -202,7 +204,7 @@ class ChatController extends GetxController {
     final startTime = DateTime.now();
     try {
       print('   ☁️ Saving to Firestore...');
-      
+
       final batch = _firestore.batch();
       final chatRef = _firestore
           .collection('users')
@@ -214,15 +216,17 @@ class ChatController extends GetxController {
           : messages;
 
       for (var message in recentMessages) {
-        final docRef = chatRef.doc(message.timestamp.millisecondsSinceEpoch.toString());
+        final docRef =
+            chatRef.doc(message.timestamp.millisecondsSinceEpoch.toString());
         batch.set(docRef, message.toFirestore());
       }
 
       await batch.commit();
-      
+
       final duration = DateTime.now().difference(startTime).inMilliseconds;
-      print('   ✅ Saved ${recentMessages.length} messages to Firestore in ${duration}ms');
-      
+      print(
+          '   ✅ Saved ${recentMessages.length} messages to Firestore in ${duration}ms');
+
       _cleanupOldMessages(userId);
     } catch (e) {
       print('   ❌ Firestore save failed: $e');
@@ -247,7 +251,8 @@ class ChatController extends GetxController {
         }
 
         await batch.commit();
-        print('   🧹 Cleaned up ${docsToDelete.length} old messages from Firestore');
+        print(
+            '   🧹 Cleaned up ${docsToDelete.length} old messages from Firestore');
       }
     } catch (e) {
       print('   ⚠️ Cleanup failed: $e');
@@ -285,7 +290,7 @@ class ChatController extends GetxController {
 
       print('📡 Calling backend API...');
       final response = await http.post(
-        Uri.parse('$_baseUrl/chat'),
+        Uri.parse('$_baseUrl/api/chat'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'message': userMessage,
@@ -296,10 +301,10 @@ class ChatController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         print('✅ AI Response received');
         print('🤖 Assistant: ${data['response'].substring(0, 50)}...');
-        
+
         // Add AI response
         messages.add(ChatMessage(
           role: 'assistant',
@@ -307,7 +312,8 @@ class ChatController extends GetxController {
           isNew: true, // ✅ This is a new message - show typewriter effect
         ));
 
-        if (data['suggestions'] != null && (data['suggestions'] as List).isNotEmpty) {
+        if (data['suggestions'] != null &&
+            (data['suggestions'] as List).isNotEmpty) {
           quickSuggestions.value = List<String>.from(data['suggestions']);
           print('💡 Updated ${quickSuggestions.length} suggestions');
         }
@@ -317,9 +323,8 @@ class ChatController extends GetxController {
           _saveToCache(),
           _saveToFirestore(),
         ]);
-        
-        print('✅ Message saved successfully!');
 
+        print('✅ Message saved successfully!');
       } else {
         throw Exception('Chat API failed: ${response.statusCode}');
       }
@@ -327,7 +332,8 @@ class ChatController extends GetxController {
       print('❌ Chat error: $e');
       messages.add(ChatMessage(
         role: 'assistant',
-        content: 'Sorry, I\'m having trouble connecting right now. Please try again! 🙏',
+        content:
+            'Sorry, I\'m having trouble connecting right now. Please try again! 🙏',
       ));
       await _saveToCache();
     } finally {
@@ -373,18 +379,19 @@ class ChatController extends GetxController {
 
   void useSuggestion(String suggestion) {
     print('💡 Using suggestion: $suggestion');
-    sendMessage(suggestion.replaceAll(RegExp(r'[💪🥗🎯🌸😌🍵🔥😴]'), '').trim());
+    sendMessage(
+        suggestion.replaceAll(RegExp(r'[💪🥗🎯🌸😌🍵🔥😴]'), '').trim());
   }
 
   void clearChat() async {
     print('\n🧹 ========== CLEARING CHAT ==========');
-    
+
     messages.clear();
     _addWelcomeMessage();
-    
+
     await _saveToCache();
     print('   ✅ Cache cleared');
-    
+
     final userId = _userService.currentUser.value?.uid;
     if (userId != null) {
       try {
@@ -399,20 +406,21 @@ class ChatController extends GetxController {
           batch.delete(doc.reference);
         }
         await batch.commit();
-        print('   ✅ Firestore cleared (${snapshot.docs.length} messages deleted)');
+        print(
+            '   ✅ Firestore cleared (${snapshot.docs.length} messages deleted)');
       } catch (e) {
         print('   ⚠️ Failed to clear Firestore: $e');
       }
     }
-    
+
     print('🧹 ========== CLEAR COMPLETE ==========\n');
   }
 
-    void _addWelcomeMessage() {
-      messages.add(ChatMessage(
-        role: 'assistant',
-        content: 'Hi! 👋 I\'m your fitness coach. How can I help you today?',
-        isNew: true, // ✅ Show typewriter for welcome message
-      ));
-    }
+  void _addWelcomeMessage() {
+    messages.add(ChatMessage(
+      role: 'assistant',
+      content: 'Hi! 👋 I\'m your fitness coach. How can I help you today?',
+      isNew: true, // ✅ Show typewriter for welcome message
+    ));
+  }
 }

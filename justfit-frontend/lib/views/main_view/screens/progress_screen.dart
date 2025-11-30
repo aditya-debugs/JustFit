@@ -21,21 +21,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
   final WorkoutPlanController _controller = Get.find<WorkoutPlanController>();
   final FirestoreService _firestoreService = Get.find<FirestoreService>();
   final UserService _userService = Get.find<UserService>();
-  
+
   // Weight tracking
   double currentWeight = 0.0;
   double? goalWeight;
   List<WeightEntry> weightHistory = [];
   DateTime _selectedWeightMonth = DateTime.now();
-  
+
   // Duration tracking (independent)
-  DateTime _selectedDurationWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  DateTime _selectedDurationWeekStart =
+      DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   Map<int, int> weeklyDurations = {};
 
   // Calories tracking (independent)
-  DateTime _selectedCaloriesWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  DateTime _selectedCaloriesWeekStart =
+      DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   Map<int, int> weeklyCalories = {};
-  
+
   // Monthly workout days
   Set<int> completedDays = {};
   DateTime _selectedCalendarMonth = DateTime.now();
@@ -59,11 +61,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     // Load weight history
     await _loadWeightHistory();
-    
+
     // Load weekly stats
     await _loadWeeklyDurations();
     await _loadWeeklyCalories();
-    
+
     // Load monthly workout days
     await _loadMonthlyWorkoutDays();
   }
@@ -72,7 +74,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = _userService.currentUser.value;
     if (user == null) return;
 
-    print('⚖️ Loading weight for ${_selectedWeightMonth.year}-${_selectedWeightMonth.month}');
+    print(
+        '⚖️ Loading weight for ${_selectedWeightMonth.year}-${_selectedWeightMonth.month}');
 
     try {
       // 1. Load initial weight (one time only)
@@ -100,11 +103,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
       print('⚖️ Found ${monthEntries.length} logged entries for this month');
 
       setState(() {
-        weightHistory = monthEntries.map((data) => WeightEntry(
-          date: data['date'] as DateTime,
-          weight: (data['weight'] as num).toDouble(),
-        )).toList();
-        
+        weightHistory = monthEntries
+            .map((data) => WeightEntry(
+                  date: data['date'] as DateTime,
+                  weight: (data['weight'] as num).toDouble(),
+                ))
+            .toList();
+
         // Sort by date
         weightHistory.sort((a, b) => a.date.compareTo(b.date));
 
@@ -114,10 +119,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
           final userDoc = _userService.currentUser.value;
           if (userDoc != null) {
             // Use current month as signup month for display
-            final signupDate = DateTime.now(); // You can get actual signup date from user.createdAt
-            
+            final signupDate = DateTime
+                .now(); // You can get actual signup date from user.createdAt
+
             // Only show initial weight in current month or signup month
-            if (_selectedWeightMonth.year == DateTime.now().year && 
+            if (_selectedWeightMonth.year == DateTime.now().year &&
                 _selectedWeightMonth.month == DateTime.now().month) {
               weightHistory = [
                 WeightEntry(
@@ -139,7 +145,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
           print('⚖️ Current weight (initial): $currentWeight kg');
         }
       });
-
     } catch (e) {
       print('❌ Error loading weight: $e');
     }
@@ -149,7 +154,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = _userService.currentUser.value;
     if (user == null) return;
 
-    print('⏱️ Loading weekly durations for week starting: $_selectedDurationWeekStart');
+    print(
+        '⏱️ Loading weekly durations for week starting: $_selectedDurationWeekStart');
 
     try {
       final durations = await _firestoreService.getWeeklyDuration(
@@ -158,7 +164,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
 
       setState(() {
-        weeklyDurations = durations; // ✅ Data is already in minutes from Firestore
+        weeklyDurations =
+            durations; // ✅ Data is already in minutes from Firestore
       });
     } catch (e) {
       print('❌ Error loading weekly durations: $e');
@@ -169,7 +176,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = _userService.currentUser.value;
     if (user == null) return;
 
-    print('🔥 Loading weekly calories for week starting: $_selectedCaloriesWeekStart');
+    print(
+        '🔥 Loading weekly calories for week starting: $_selectedCaloriesWeekStart');
 
     try {
       final calories = await _firestoreService.getWeeklyCalories(
@@ -193,7 +201,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     print('🔄 Loading monthly workout days for calendar...');
-    print('   Selected month: ${_selectedCalendarMonth.year}-${_selectedCalendarMonth.month}');
+    print(
+        '   Selected month: ${_selectedCalendarMonth.year}-${_selectedCalendarMonth.month}');
 
     try {
       final days = await _firestoreService.getMonthlyWorkoutDays(
@@ -207,7 +216,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       setState(() {
         completedDays = days;
       });
-      
+
       print('✅ UI updated with completed days');
     } catch (e) {
       print('❌ Error loading monthly workout days: $e');
@@ -222,18 +231,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     print('📊 Loading profile stats for user: ${user.uid}');
-    
+
     try {
       final stats = await _firestoreService.getUserProgressStats(user.uid);
       print('📊 Fetched stats from Firestore: $stats');
-      
+
       if (stats != null) {
         setState(() {
           totalWorkoutsCompleted = stats['totalWorkoutsCompleted'] ?? 0;
           totalMinutesExercised = stats['totalMinutesExercised'] ?? 0;
           totalCaloriesBurned = stats['totalCaloriesBurned'] ?? 0;
         });
-        print('✅ Profile stats loaded: $totalWorkoutsCompleted workouts, $totalMinutesExercised min, $totalCaloriesBurned cal');
+        print(
+            '✅ Profile stats loaded: $totalWorkoutsCompleted workouts, $totalMinutesExercised min, $totalCaloriesBurned cal');
       } else {
         print('⚠️ No stats document found in Firestore');
       }
@@ -254,37 +264,37 @@ class _ProgressScreenState extends State<ProgressScreen> {
             SliverToBoxAdapter(
               child: _buildHeader(),
             ),
-            
+
             // Profile Section
             SliverToBoxAdapter(
               child: _buildProfileSection(),
             ),
-            
+
             // Achievement Section
             SliverToBoxAdapter(
               child: _buildAchievementSection(),
             ),
-            
+
             // Weight Section
             SliverToBoxAdapter(
               child: _buildWeightSection(),
             ),
-            
+
             // Monthly Achievement Calendar
             SliverToBoxAdapter(
               child: _buildMonthlyAchievementSection(),
             ),
-            
+
             // Workout Duration Section
             SliverToBoxAdapter(
               child: _buildWorkoutDurationSection(),
             ),
-            
+
             // Calories Burned Section
             SliverToBoxAdapter(
               child: _buildCaloriesBurnedSection(),
             ),
-            
+
             // Bottom padding
             SliverToBoxAdapter(
               child: const SizedBox(height: 100),
@@ -295,7 +305,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-    // ========== HEADER ==========
+  // ========== HEADER ==========
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -319,7 +329,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 snackPosition: SnackPosition.BOTTOM,
               );
             },
-            icon: const Icon(Icons.headset_mic, color: Color(0xFFE91E63), size: 20),
+            icon: const Icon(Icons.headset_mic,
+                color: Color(0xFFE91E63), size: 20),
             label: Text(
               'Feedback',
               style: GoogleFonts.poppins(
@@ -363,7 +374,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   // ========== PROFILE SECTION ==========
   Widget _buildProfileSection() {
     final user = _userService.currentUser.value;
-    
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       padding: const EdgeInsets.all(24),
@@ -426,9 +437,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // User info and stats
           Expanded(
             child: Column(
@@ -446,19 +457,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSmallStat('$totalWorkoutsCompleted', 'Workouts'), // ✅ DYNAMIC
+                    _buildSmallStat(
+                        '$totalWorkoutsCompleted', 'Workouts'), // ✅ DYNAMIC
                     Container(
                       width: 1,
                       height: 30,
                       color: Colors.grey[300],
                     ),
-                    _buildSmallStat('$totalCaloriesBurned', 'Kcal'), // ✅ DYNAMIC
+                    _buildSmallStat(
+                        '$totalCaloriesBurned', 'Kcal'), // ✅ DYNAMIC
                     Container(
                       width: 1,
                       height: 30,
                       color: Colors.grey[300],
                     ),
-                    _buildSmallStat('$totalMinutesExercised', 'Minutes'), // ✅ DYNAMIC
+                    _buildSmallStat(
+                        '$totalMinutesExercised', 'Minutes'), // ✅ DYNAMIC
                   ],
                 ),
               ],
@@ -528,32 +542,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   // ========== ACHIEVEMENT SECTION ==========
   Widget _buildAchievementSection() {
-    // Get real achievements from controller
-    final achievements = [
-      if (_controller.userStreak.value >= 1) AchievementModel.firstWorkout,
-      if (_controller.userStreak.value >= 2) AchievementModel.twoDayStreak,
-      if (_controller.userStreak.value >= 3) AchievementModel(
-        type: AchievementType.threeDayStreak,
-        title: 'Workout 3 days',
-        description: 'Completed 3 days of workouts',
-        badgeNumber: 3,
-        badgeStyle: BadgeStyle(
-          primaryColor: const Color(0xFFFF9800),
-          accentColor: const Color(0xFFF57C00),
-        ),
-      ),
-      if (_controller.userStreak.value >= 7) AchievementModel(
-        type: AchievementType.sevenDayStreak,
-        title: '7 Day Streak',
-        description: 'Completed 7 days of workouts',
-        badgeNumber: 7,
-        badgeStyle: BadgeStyle(
-          primaryColor: const Color(0xFF4CAF50),
-          accentColor: const Color(0xFF2E7D32),
-        ),
-      ),
-    ].obs;
-    
+    final userId = _userService.currentUser.value?.uid;
+
+    if (userId == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       padding: const EdgeInsets.all(20),
@@ -581,46 +575,67 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Horizontal scrollable achievement badges
           SizedBox(
-            height: 170, // ✅ Increased height to prevent overflow
-            child: Obx(() {
-              if (achievements.isEmpty) {
-                return Center(
-                  child: Text(
-                    'Complete workouts to earn achievements!',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[500],
-                      fontSize: 14,
+            height: 170,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _firestoreService.getAchievements(userId: userId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Complete workouts to earn achievements!',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[500],
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                );
-              }
-              
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(right: 20), // ✅ Extra padding for visual hint
-                itemCount: achievements.length,
-                itemBuilder: (context, index) {
-                  return _buildAchievementBadge(
-                    achievements[index],
-                    isLast: index == achievements.length - 1,
                   );
-                },
-              );
-            }),
+                }
+
+                final achievements = snapshot.data!;
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(right: 20),
+                  itemCount: achievements.length,
+                  itemBuilder: (context, index) {
+                    final data = achievements[index];
+                    final achievementType = AchievementType.values.firstWhere(
+                      (e) => e.toString() == data['achievementType'],
+                      orElse: () => AchievementType.firstWorkout,
+                    );
+
+                    // Get the correct badge style based on achievement type
+                    final achievement =
+                        _getAchievementByType(achievementType, data);
+
+                    return _buildAchievementBadge(
+                      achievement,
+                      isLast: index == achievements.length - 1,
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAchievementBadge(AchievementModel achievement, {bool isLast = false}) {
+  Widget _buildAchievementBadge(AchievementModel achievement,
+      {bool isLast = false}) {
     return Container(
       width: 120, // ✅ Reduced width to fit more badges
-      margin: EdgeInsets.only(right: isLast ? 0 : 12), // ✅ Less spacing, no margin on last
+      margin: EdgeInsets.only(
+          right: isLast ? 0 : 12), // ✅ Less spacing, no margin on last
       child: Column(
         mainAxisSize: MainAxisSize.min, // ✅ Prevent overflow
         children: [
@@ -668,7 +683,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 8), // ✅ Reduced spacing
-          Flexible( // ✅ Added Flexible to prevent overflow
+          Flexible(
+            // ✅ Added Flexible to prevent overflow
             child: Text(
               achievement.title,
               textAlign: TextAlign.center,
@@ -692,6 +708,52 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ],
       ),
     );
+  }
+
+  // Helper method to get achievement with proper badge style
+  AchievementModel _getAchievementByType(
+      AchievementType type, Map<String, dynamic> data) {
+    // Get the predefined achievement which has the correct badge style
+    AchievementModel baseAchievement;
+
+    switch (type) {
+      case AchievementType.firstWorkout:
+        baseAchievement = AchievementModel.firstWorkout;
+        break;
+      case AchievementType.twoWorkouts:
+        baseAchievement = AchievementModel.twoWorkouts;
+        break;
+      case AchievementType.threeWorkouts:
+        baseAchievement = AchievementModel.threeWorkouts;
+        break;
+      case AchievementType.fiveWorkouts:
+        baseAchievement = AchievementModel.fiveWorkouts;
+        break;
+      case AchievementType.tenWorkouts:
+        baseAchievement = AchievementModel.tenWorkouts;
+        break;
+      case AchievementType.twoDayStreak:
+        baseAchievement = AchievementModel.twoDayStreak;
+        break;
+      case AchievementType.threeDayStreak:
+        baseAchievement = AchievementModel.threeDayStreak;
+        break;
+      case AchievementType.fiveDayStreak:
+        baseAchievement = AchievementModel.fiveDayStreak;
+        break;
+      case AchievementType.sevenDayStreak:
+        baseAchievement = AchievementModel.sevenDayStreak;
+        break;
+      case AchievementType.tenDayStreak:
+        baseAchievement = AchievementModel.tenDayStreak;
+        break;
+      case AchievementType.thirtyDayStreak:
+        baseAchievement = AchievementModel.thirtyDayStreak;
+        break;
+    }
+
+    // Return achievement with correct badge style
+    return baseAchievement;
   }
 
   // ========== WEIGHT SECTION ==========
@@ -722,7 +784,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Month selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -730,7 +792,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
               IconButton(
                 onPressed: _canGoPreviousMonth() ? _goToPreviousMonth : null,
                 icon: const Icon(Icons.chevron_left),
-                color: _canGoPreviousMonth() ? Colors.grey[700] : Colors.grey[300],
+                color:
+                    _canGoPreviousMonth() ? Colors.grey[700] : Colors.grey[300],
               ),
               Text(
                 DateFormat('MMM, yyyy').format(_selectedWeightMonth),
@@ -748,7 +811,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Current weight and button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -779,14 +842,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   elevation: 0,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Weight graph - compact and clean
           Container(
             height: 150,
@@ -801,9 +865,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: Container(),
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Goal indicator
           Align(
             alignment: Alignment.centerRight,
@@ -833,13 +897,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final firstDate = DateTime(2023, 1);
     return _selectedWeightMonth.isAfter(firstDate);
   }
-  
+
   bool _canGoNextMonth() {
     final now = DateTime.now();
-    return _selectedWeightMonth.year < now.year || 
-           (_selectedWeightMonth.year == now.year && _selectedWeightMonth.month < now.month);
+    return _selectedWeightMonth.year < now.year ||
+        (_selectedWeightMonth.year == now.year &&
+            _selectedWeightMonth.month < now.month);
   }
-  
+
   void _goToPreviousMonth() {
     setState(() {
       _selectedWeightMonth = DateTime(
@@ -847,11 +912,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedWeightMonth.month - 1,
       );
     });
-    
+
     // ✅ Show loading state with animation
     _loadWeightHistory();
   }
-  
+
   void _goToNextMonth() {
     setState(() {
       _selectedWeightMonth = DateTime(
@@ -859,18 +924,20 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedWeightMonth.month + 1,
       );
     });
-    
+
     // ✅ Show loading state with animation
     _loadWeightHistory();
   }
 
-    // ========== MONTHLY ACHIEVEMENT SECTION ==========
+  // ========== MONTHLY ACHIEVEMENT SECTION ==========
   Widget _buildMonthlyAchievementSection() {
-    final firstDayOfMonth = DateTime(_selectedCalendarMonth.year, _selectedCalendarMonth.month, 1);
-    final lastDayOfMonth = DateTime(_selectedCalendarMonth.year, _selectedCalendarMonth.month + 1, 0);
+    final firstDayOfMonth =
+        DateTime(_selectedCalendarMonth.year, _selectedCalendarMonth.month, 1);
+    final lastDayOfMonth = DateTime(
+        _selectedCalendarMonth.year, _selectedCalendarMonth.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     final firstWeekday = firstDayOfMonth.weekday % 7; // 0 = Sunday
-    
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       padding: const EdgeInsets.all(20),
@@ -897,15 +964,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Month selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                onPressed: _canGoPreviousCalendarMonth() ? _goToPreviousCalendarMonth : null,
+                onPressed: _canGoPreviousCalendarMonth()
+                    ? _goToPreviousCalendarMonth
+                    : null,
                 icon: const Icon(Icons.chevron_left),
-                color: _canGoPreviousCalendarMonth() ? Colors.grey[700] : Colors.grey[300],
+                color: _canGoPreviousCalendarMonth()
+                    ? Colors.grey[700]
+                    : Colors.grey[300],
               ),
               Text(
                 DateFormat('MMM, yyyy').format(_selectedCalendarMonth),
@@ -916,14 +987,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 ),
               ),
               IconButton(
-                onPressed: _canGoNextCalendarMonth() ? _goToNextCalendarMonth : null,
+                onPressed:
+                    _canGoNextCalendarMonth() ? _goToNextCalendarMonth : null,
                 icon: const Icon(Icons.chevron_right),
-                color: _canGoNextCalendarMonth() ? Colors.grey[700] : Colors.grey[300],
+                color: _canGoNextCalendarMonth()
+                    ? Colors.grey[700]
+                    : Colors.grey[300],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Calendar
           Column(
             children: [
@@ -946,7 +1020,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     .toList(),
               ),
               const SizedBox(height: 12),
-              
+
               // Calendar days (up to 6 weeks)
               ...List.generate(6, (weekIndex) {
                 return Padding(
@@ -954,14 +1028,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(7, (dayIndex) {
-                      final dayNumber = weekIndex * 7 + dayIndex - firstWeekday + 1;
-                      
+                      final dayNumber =
+                          weekIndex * 7 + dayIndex - firstWeekday + 1;
+
                       if (dayNumber < 1 || dayNumber > daysInMonth) {
                         return const SizedBox(width: 40, height: 40);
                       }
-                      
+
                       final isCompleted = completedDays.contains(dayNumber);
-                      
+
                       return _buildCalendarDay(dayNumber, isCompleted);
                     }),
                   ),
@@ -1001,14 +1076,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final firstDate = DateTime(2023, 1);
     return _selectedCalendarMonth.isAfter(firstDate);
   }
-  
+
   bool _canGoNextCalendarMonth() {
     final now = DateTime.now();
     // Cannot go beyond current month
-    return _selectedCalendarMonth.year < now.year || 
-           (_selectedCalendarMonth.year == now.year && _selectedCalendarMonth.month < now.month);
+    return _selectedCalendarMonth.year < now.year ||
+        (_selectedCalendarMonth.year == now.year &&
+            _selectedCalendarMonth.month < now.month);
   }
-  
+
   void _goToPreviousCalendarMonth() {
     setState(() {
       _selectedCalendarMonth = DateTime(
@@ -1016,11 +1092,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _selectedCalendarMonth.month - 1,
       );
     });
-    
+
     // ✅ Smooth transition
     _loadMonthlyWorkoutDays();
   }
-  
+
   void _goToNextCalendarMonth() {
     setState(() {
       _selectedCalendarMonth = DateTime(
@@ -1042,13 +1118,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
       weekStart: _selectedDurationWeekStart,
       onPrevious: () {
         setState(() {
-          _selectedDurationWeekStart = _selectedDurationWeekStart.subtract(const Duration(days: 7));
+          _selectedDurationWeekStart =
+              _selectedDurationWeekStart.subtract(const Duration(days: 7));
         });
         _loadWeeklyDurations();
       },
       onNext: () {
         setState(() {
-          _selectedDurationWeekStart = _selectedDurationWeekStart.add(const Duration(days: 7));
+          _selectedDurationWeekStart =
+              _selectedDurationWeekStart.add(const Duration(days: 7));
         });
         _loadWeeklyDurations();
       },
@@ -1067,13 +1145,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
       weekStart: _selectedCaloriesWeekStart,
       onPrevious: () {
         setState(() {
-          _selectedCaloriesWeekStart = _selectedCaloriesWeekStart.subtract(const Duration(days: 7));
+          _selectedCaloriesWeekStart =
+              _selectedCaloriesWeekStart.subtract(const Duration(days: 7));
         });
         _loadWeeklyCalories();
       },
       onNext: () {
         setState(() {
-          _selectedCaloriesWeekStart = _selectedCaloriesWeekStart.add(const Duration(days: 7));
+          _selectedCaloriesWeekStart =
+              _selectedCaloriesWeekStart.add(const Duration(days: 7));
         });
         _loadWeeklyCalories();
       },
@@ -1094,11 +1174,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }) {
     final weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     // ✅ Set realistic minimum scale based on metric type
-    final dataMax = data.values.isEmpty ? 0 : data.values.reduce((a, b) => a > b ? a : b);
-    final minScale = unit == 'min' ? 30 : 200; // 30 min or 200 kcal minimum Y-axis
+    final dataMax =
+        data.values.isEmpty ? 0 : data.values.reduce((a, b) => a > b ? a : b);
+    final minScale =
+        unit == 'min' ? 30 : 200; // 30 min or 200 kcal minimum Y-axis
     final maxValue = dataMax > minScale ? dataMax : minScale;
     final weekEnd = weekStart.add(const Duration(days: 6));
-    
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       padding: const EdgeInsets.all(20),
@@ -1125,7 +1207,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Date range selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1155,7 +1237,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Bar graph with Y-axis labels
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1177,7 +1259,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Bar graph
               Expanded(
                 child: SizedBox(
@@ -1187,20 +1269,26 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: List.generate(7, (index) {
                       final value = data[index] ?? 0;
-                      final barHeight = maxValue > 0 ? (value / maxValue) * 140 : 0.0; // ✅ Increased from 120
-                      
+                      final barHeight = maxValue > 0
+                          ? (value / maxValue) * 140
+                          : 0.0; // ✅ Increased from 120
+
                       return Flexible(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2), // Small spacing between bars
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 2), // Small spacing between bars
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min, // ✅ CRITICAL: Minimize vertical space
+                            mainAxisSize: MainAxisSize
+                                .min, // ✅ CRITICAL: Minimize vertical space
                             children: [
                               // Value label on top of bar
                               if (value > 0)
                                 Container(
-                                  constraints: const BoxConstraints(maxWidth: 45),
-                                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1.5),
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 45),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 3, vertical: 1.5),
                                   decoration: BoxDecoration(
                                     color: Colors.black,
                                     borderRadius: BorderRadius.circular(8),
@@ -1217,19 +1305,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                     maxLines: 1,
                                   ),
                                 ),
-                              if (value > 0) const SizedBox(height: 3), // ✅ Reduced from 4
-                              
+                              if (value > 0)
+                                const SizedBox(height: 3), // ✅ Reduced from 4
+
                               // Bar
                               Container(
                                 width: 22,
-                                height: barHeight < 2 && value > 0 ? 2 : barHeight,
+                                height:
+                                    barHeight < 2 && value > 0 ? 2 : barHeight,
                                 decoration: BoxDecoration(
                                   color: value > 0 ? color : Colors.transparent,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(4)),
                                 ),
                               ),
                               const SizedBox(height: 6), // ✅ Reduced from 8
-                              
+
                               // Day label
                               Text(
                                 weekDays[index],
@@ -1250,7 +1341,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Average
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1304,7 +1395,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   void _showLogWeightDialog() {
     final TextEditingController weightController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1336,7 +1427,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     userId: user.uid,
                     weight: weight,
                   );
-                  
+
                   setState(() {
                     currentWeight = weight;
                     weightHistory.add(WeightEntry(
@@ -1403,10 +1494,12 @@ class _WeightGraphPainter extends CustomPainter {
     // Calculate min and max for Y-axis
     final weights = weightHistory.map((e) => e.weight).toList();
     if (goalWeight != null) weights.add(goalWeight!);
-    
-    final minWeight = (weights.reduce((a, b) => a < b ? a : b) / 10).floor() * 10.0;
-    final maxWeight = (weights.reduce((a, b) => a > b ? a : b) / 10).ceil() * 10.0 + 10;
-    
+
+    final minWeight =
+        (weights.reduce((a, b) => a < b ? a : b) / 10).floor() * 10.0;
+    final maxWeight =
+        (weights.reduce((a, b) => a > b ? a : b) / 10).ceil() * 10.0 + 10;
+
     // Define graph area (leaving space for labels)
     final graphLeft = 30.0;
     final graphTop = 10.0;
@@ -1434,7 +1527,8 @@ class _WeightGraphPainter extends CustomPainter {
         ],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTRB(graphLeft, graphTop, graphRight, graphBottom));
+      ).createShader(
+          Rect.fromLTRB(graphLeft, graphTop, graphRight, graphBottom));
 
     final pointPaint = Paint()
       ..color = const Color(0xFFE91E63)
@@ -1458,7 +1552,8 @@ class _WeightGraphPainter extends CustomPainter {
     // Draw Y-axis labels and horizontal grid lines
     final ySteps = 3; // 3 labels: min, mid, max
     for (int i = 0; i <= ySteps; i++) {
-      final weight = minWeight + (maxWeight - minWeight) * (ySteps - i) / ySteps;
+      final weight =
+          minWeight + (maxWeight - minWeight) * (ySteps - i) / ySteps;
       final y = graphTop + graphHeight * i / ySteps;
 
       // Draw horizontal grid line
@@ -1497,7 +1592,8 @@ class _WeightGraphPainter extends CustomPainter {
     for (int i = 0; i < weightHistory.length; i++) {
       final dayOfMonth = weightHistory[i].date.day;
       final x = graphLeft + (graphWidth * (dayOfMonth - 1) / (daysInMonth - 1));
-      final normalizedY = (weightHistory[i].weight - minWeight) / (maxWeight - minWeight);
+      final normalizedY =
+          (weightHistory[i].weight - minWeight) / (maxWeight - minWeight);
       final y = graphBottom - (normalizedY * graphHeight);
       points.add(Offset(x, y));
     }
@@ -1507,7 +1603,7 @@ class _WeightGraphPainter extends CustomPainter {
     // Draw gradient fill area
     final fillPath = Path();
     fillPath.moveTo(points[0].dx, graphBottom);
-    
+
     for (int i = 0; i < points.length; i++) {
       if (i == 0) {
         fillPath.lineTo(points[i].dx, points[i].dy);
@@ -1527,7 +1623,7 @@ class _WeightGraphPainter extends CustomPainter {
         );
       }
     }
-    
+
     fillPath.lineTo(points.last.dx, graphBottom);
     fillPath.close();
     canvas.drawPath(fillPath, fillPaint);
@@ -1535,7 +1631,7 @@ class _WeightGraphPainter extends CustomPainter {
     // Draw the main line
     final linePath = Path();
     linePath.moveTo(points[0].dx, points[0].dy);
-    
+
     for (int i = 1; i < points.length; i++) {
       final prevPoint = points[i - 1];
       final currentPoint = points[i];
@@ -1560,13 +1656,14 @@ class _WeightGraphPainter extends CustomPainter {
 
     // Draw goal line (dashed)
     if (goalWeight != null) {
-      final normalizedGoalY = (goalWeight! - minWeight) / (maxWeight - minWeight);
+      final normalizedGoalY =
+          (goalWeight! - minWeight) / (maxWeight - minWeight);
       final goalY = graphBottom - (normalizedGoalY * graphHeight);
-      
+
       const dashWidth = 6.0;
       const dashSpace = 4.0;
       double startX = graphLeft;
-      
+
       while (startX < graphRight) {
         canvas.drawLine(
           Offset(startX, goalY),
@@ -1575,20 +1672,20 @@ class _WeightGraphPainter extends CustomPainter {
         );
         startX += dashWidth + dashSpace;
       }
-           // ✅ ADD ONLY THIS PART (11 lines):
-           // Draw "Goal" label
-           textPainter.text = TextSpan(
-             text: 'Goal',
-             style: TextStyle(
-               color: Colors.grey[600],
-               fontSize: 9,
-               fontWeight: FontWeight.w500,
-             ),
-           );
-           textPainter.layout();
-           textPainter.paint(canvas, Offset(graphRight - textPainter.width - 5, goalY - 12));
-           // ✅ END OF ADDITION
-
+      // ✅ ADD ONLY THIS PART (11 lines):
+      // Draw "Goal" label
+      textPainter.text = TextSpan(
+        text: 'Goal',
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 9,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+          canvas, Offset(graphRight - textPainter.width - 5, goalY - 12));
+      // ✅ END OF ADDITION
     }
 
     // Draw X-axis labels (selected days: 1, 7, 14, 21, 28)
@@ -1596,7 +1693,7 @@ class _WeightGraphPainter extends CustomPainter {
     for (final day in xLabels) {
       if (day <= daysInMonth) {
         final x = graphLeft + (graphWidth * (day - 1) / (daysInMonth - 1));
-        
+
         textPainter.text = TextSpan(
           text: '$day',
           style: TextStyle(

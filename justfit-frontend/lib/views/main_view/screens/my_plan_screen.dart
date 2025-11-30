@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../../../controllers/workout_plan_controller.dart';
+import '../../../core/animations/page_transitions.dart';
 import '../../../data/models/workout/phase_model.dart';
 import '../../../data/models/workout/day_plan_model.dart';
 import '../../../data/models/workout/workout_plan_model.dart';
@@ -570,8 +571,8 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
     // Use controller's hybrid lock logic
     final isLocked = _controller.isDayLocked(dayNumber);
 
-    // Current status
-    final isCurrent = isCurrentDay && !isCompleted;
+    // Current status - ALWAYS highlight current day regardless of completion
+    final isCurrent = isCurrentDay;
 
     final calories = _controller.calculateDayCalories(day);
 
@@ -730,8 +731,8 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
                   ),
                 ),
 
-                // Start Training button for current day (only if not completed)
-                if (showStartButton && !isCompleted)
+                // Start Training button for current day (ALWAYS show for current day)
+                if (showStartButton)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: SizedBox(
@@ -749,7 +750,7 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
                           ),
                         ),
                         child: Text(
-                          'START TRAINING',
+                          isCompleted ? 'RESTART TRAINING' : 'START TRAINING',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -922,11 +923,11 @@ class _MyPlanScreenState extends State<MyPlanScreen> {
       WorkoutPlanModel plan, DayPlanModel day, int calories, bool isLocked) {
     // Check if it's a rest day
     if (day.isRestDay) {
-      // Navigate to Rest Day Screen
+      // Navigate to Rest Day Screen with smooth animation
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => RestDayScreen(
+        PageTransitions.slideFromRight(
+          RestDayScreen(
             dayNumber: day.dayNumber,
             description: day.dayTitle,
             isLocked: isLocked, // Pass lock status

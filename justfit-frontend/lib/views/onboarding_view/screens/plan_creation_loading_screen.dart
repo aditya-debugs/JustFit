@@ -14,38 +14,35 @@ class PlanCreationLoadingScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<PlanCreationLoadingScreen> createState() => _PlanCreationLoadingScreenState();
+  State<PlanCreationLoadingScreen> createState() =>
+      _PlanCreationLoadingScreenState();
 }
 
 class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
     with TickerProviderStateMixin {
   late AnimationController _progressController;
-  late AnimationController _floatController1;
-  late AnimationController _floatController2;
-  late AnimationController _floatController3;
-  late AnimationController _pulseController;
-  
+  late AnimationController _floatController;
+
   late Animation<double> _progressAnimation;
-  late Animation<double> _float1;
-  late Animation<double> _float2;
-  late Animation<double> _float3;
-  late Animation<double> _pulseAnimation;
+  late Animation<double> _floatAnimation;
 
   Timer? _pollTimer;
   bool _planReady = false;
 
-  final WorkoutPlanController _planController = Get.find<WorkoutPlanController>();
-  final OnboardingController _onboardingController = Get.find<OnboardingController>(); // ✅ ADD THIS
+  final WorkoutPlanController _planController =
+      Get.find<WorkoutPlanController>();
+  final OnboardingController _onboardingController =
+      Get.find<OnboardingController>(); // ✅ ADD THIS
 
   // Loading messages that rotate
   final List<String> _loadingMessages = [
+    'Creating your personal plan...',
     'Analyzing your fitness goals...',
-    'Creating personalized workouts...',
+    'Building personalized workouts...',
     'Calculating optimal rest days...',
-    'Building progressive training...',
     'Almost there...',
   ];
-  
+
   int _currentMessageIndex = 0;
 
   @override
@@ -62,42 +59,14 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       CurvedAnimation(parent: _progressController, curve: Curves.easeOut),
     );
 
-    // Pulse animation for the progress ring
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    // Floating animations for profile circles
-    _floatController1 = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-
-    _floatController2 = AnimationController(
+    // Floating animation for profile circles only
+    _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     )..repeat(reverse: true);
 
-    _floatController3 = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3000),
-    )..repeat(reverse: true);
-
-    _float1 = Tween<double>(begin: -8.0, end: 8.0).animate(
-      CurvedAnimation(parent: _floatController1, curve: Curves.easeInOut),
-    );
-
-    _float2 = Tween<double>(begin: -10.0, end: 10.0).animate(
-      CurvedAnimation(parent: _floatController2, curve: Curves.easeInOut),
-    );
-
-    _float3 = Tween<double>(begin: -6.0, end: 6.0).animate(
-      CurvedAnimation(parent: _floatController3, curve: Curves.easeInOut),
+    _floatAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
     // Start fake progress animation
@@ -107,7 +76,8 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
     Timer.periodic(const Duration(seconds: 3), (timer) {
       if (mounted && !_planReady) {
         setState(() {
-          _currentMessageIndex = (_currentMessageIndex + 1) % _loadingMessages.length;
+          _currentMessageIndex =
+              (_currentMessageIndex + 1) % _loadingMessages.length;
         });
       } else {
         timer.cancel();
@@ -116,17 +86,18 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
 
     // ✅ Start polling for plan immediately
     print('⏳ Starting to poll for plan completion...');
-    _pollTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) { // ✅ Check every 500ms
+    _pollTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      // ✅ Check every 500ms
       _checkPlanStatus();
     });
   }
 
   void _checkPlanStatus() {
     // Check if plan is loaded and ready
-    if (_planController.currentPlan.value != null && 
+    if (_planController.currentPlan.value != null &&
         _planController.currentPlan.value!.phases.isNotEmpty) {
-      
-      print('✅ Plan detected! Phases: ${_planController.currentPlan.value!.phases.length}');
+      print(
+          '✅ Plan detected! Phases: ${_planController.currentPlan.value!.phases.length}');
       _completePlanLoading();
     } else {
       // Only print every 2 seconds to avoid log spam
@@ -153,7 +124,7 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
       Future.delayed(const Duration(milliseconds: 1200), () async {
         if (mounted) {
           _pollTimer?.cancel();
-          
+
           // ✅ Save initial weight entry
           try {
             await _onboardingController.saveInitialWeight();
@@ -161,7 +132,7 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
           } catch (e) {
             print('⚠️ Failed to save initial weight: $e');
           }
-          
+
           widget.onComplete?.call();
         }
       });
@@ -171,76 +142,65 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
   @override
   void dispose() {
     _progressController.dispose();
-    _floatController1.dispose();
-    _floatController2.dispose();
-    _floatController3.dispose();
-    _pulseController.dispose();
+    _floatController.dispose();
     _pollTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SizedBox(
-          height: screenHeight,
-          width: screenWidth,
-          child: Stack(
-            children: [
-              // Main content
-              Column(
-                children: [
-                  const SizedBox(height: 100),
-                  
-                  // Circular progress indicator with pulse effect
-                  _buildCircularProgress(),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Loading text with fade animation
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      child: Text(
-                        _loadingMessages[_currentMessageIndex],
-                        key: ValueKey<int>(_currentMessageIndex),
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
+        child: Column(
+          children: [
+            // Top section with centered content
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 40),
+
+                    // Circular progress indicator (NO PULSE)
+                    _buildCircularProgress(),
+
+                    const SizedBox(height: 32),
+
+                    // Loading text with fade animation
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        child: Text(
+                          _loadingMessages[_currentMessageIndex],
+                          key: ValueKey<int>(_currentMessageIndex),
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[500],
+                            letterSpacing: -0.2,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // User statistics
-                  _buildUserStats(),
-                  
-                  const SizedBox(height: 180), // Space for floating circles
-                ],
-              ),
 
-              // Floating profile circles (at the bottom)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: SizedBox(
-                  height: 250,
-                  child: _buildFloatingCircles(),
+                    const SizedBox(height: 60),
+
+                    // User statistics
+                    _buildUserStats(),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Bottom section with floating profile circles
+            SizedBox(
+              height: 280,
+              child: _buildFloatingCircles(),
+            ),
+          ],
         ),
       ),
     );
@@ -248,76 +208,62 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
 
   Widget _buildCircularProgress() {
     return AnimatedBuilder(
-      animation: Listenable.merge([_progressAnimation, _pulseAnimation]),
+      animation: _progressAnimation,
       builder: (context, child) {
         final percentage = (_progressAnimation.value * 100).toInt();
-        
-        return Transform.scale(
-          scale: _pulseAnimation.value,
-          child: SizedBox(
-            width: 200,
-            height: 200,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Background circle
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey[50],
-                  ),
-                ),
-                
-                // Progress circle
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: TweenAnimationBuilder<double>(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    tween: Tween<double>(
-                      begin: 0,
-                      end: _progressAnimation.value,
+
+        return SizedBox(
+          width: 220,
+          height: 220,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Background circle
+              Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFAFAFA),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
                     ),
-                    builder: (context, value, _) => CircularProgressIndicator(
-                      value: value,
-                      strokeWidth: 14,
-                      strokeCap: StrokeCap.round,
-                      backgroundColor: Colors.transparent,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _planReady 
-                            ? const Color(0xFF4CAF50) // Green when complete
-                            : const Color(0xFFFA2A55), // Pink while loading
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // Percentage text
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$percentage%',
-                      style: GoogleFonts.poppins(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black,
-                        height: 1.0,
-                      ),
-                    ),
-                    if (_planReady)
-                      const Icon(
-                        Icons.check_circle,
-                        color: Color(0xFF4CAF50),
-                        size: 32,
-                      ),
                   ],
                 ),
-              ],
-            ),
+              ),
+
+              // Progress circle
+              SizedBox(
+                width: 220,
+                height: 220,
+                child: CircularProgressIndicator(
+                  value: _progressAnimation.value,
+                  strokeWidth: 12,
+                  strokeCap: StrokeCap.round,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _planReady
+                        ? const Color(0xFF4CAF50) // Green when complete
+                        : const Color(0xFFFA2A55), // Pink while loading
+                  ),
+                ),
+              ),
+
+              // Percentage text
+              Text(
+                '$percentage%',
+                style: GoogleFonts.poppins(
+                  fontSize: 56,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                  height: 1.0,
+                  letterSpacing: -1.5,
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -325,120 +271,122 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
   }
 
   Widget _buildUserStats() {
-    return Column(
-      children: [
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '1,000,000+',
-                style: GoogleFonts.poppins(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFFA2A55),
-                  height: 1.2,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        children: [
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '1,000,000+\n',
+                  style: GoogleFonts.poppins(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFFA2A55),
+                    height: 1.1,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              TextSpan(
-                text: ' Users',
-                style: GoogleFonts.poppins(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFFA2A55),
-                  height: 1.2,
+                TextSpan(
+                  text: 'Users',
+                  style: GoogleFonts.poppins(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFFA2A55),
+                    height: 1.1,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'have chosen JustFit!',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+          const SizedBox(height: 8),
+          Text(
+            'have chosen JustFit!',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildFloatingCircles() {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Stack(
       children: [
-        // Bottom left - small
+        // Row 1 (Top) - 3 circles
         _buildFloatingCircle(
-          left: 20,
-          bottom: 130,
-          size: 50,
-          color: Colors.pink[100]!,
-          animation: _float1,
-        ),
-        
-        // Left side - medium
-        _buildFloatingCircle(
-          left: 60,
-          bottom: 20,
-          size: 80,
-          color: Colors.purple[100]!,
-          animation: _float2,
-        ),
-        
-        // Center large
-        _buildFloatingCircle(
-          left: null,
-          bottom: 60,
-          size: 200,
-          color: Colors.grey[200]!,
-          animation: _float3,
-          centered: true,
-        ),
-        
-        // Top right - very small
-        _buildFloatingCircle(
-          right: 120,
-          bottom: 160,
-          size: 40,
-          color: Colors.orange[100]!,
-          animation: _float1,
-        ),
-        
-        // Right side - small
-        _buildFloatingCircle(
-          right: 30,
-          bottom: 110,
+          left: screenWidth * 0.05,
+          bottom: 200,
           size: 60,
-          color: Colors.blue[100]!,
-          animation: _float2,
+          color: Colors.pink[100]!,
         ),
-        
-        // Bottom right - medium
         _buildFloatingCircle(
-          right: 10,
-          bottom: 10,
-          size: 90,
-          color: Colors.green[100]!,
-          animation: _float3,
-        ),
-        
-        // Bottom center left - small
-        _buildFloatingCircle(
-          left: 100,
-          bottom: 5,
+          left: screenWidth * 0.35,
+          bottom: 210,
           size: 55,
-          color: Colors.amber[100]!,
-          animation: _float2,
+          color: Colors.yellow[100]!,
         ),
-        
-        // Bottom center right - small
         _buildFloatingCircle(
-          right: 100,
-          bottom: 40,
+          right: screenWidth * 0.05,
+          bottom: 195,
           size: 65,
-          color: Colors.teal[100]!,
-          animation: _float3,
+          color: Colors.blue[100]!,
+        ),
+
+        // Row 2 (Middle-Top) - 2 circles
+        _buildFloatingCircle(
+          left: screenWidth * 0.02,
+          bottom: 115,
+          size: 70,
+          color: Colors.orange[100]!,
+        ),
+        _buildFloatingCircle(
+          right: screenWidth * 0.15,
+          bottom: 125,
+          size: 100,
+          color: Colors.pink[50]!,
+        ),
+
+        // Row 3 (Middle) - 3 circles including center large
+        _buildFloatingCircle(
+          left: screenWidth * 0.08,
+          bottom: 35,
+          size: 85,
+          color: Colors.purple[100]!,
+        ),
+        _buildFloatingCircle(
+          left: screenWidth * 0.5 - 110,
+          bottom: 25,
+          size: 220,
+          color: Colors.grey[300]!,
+        ),
+        _buildFloatingCircle(
+          right: screenWidth * 0.02,
+          bottom: 40,
+          size: 110,
+          color: Colors.green[100]!,
+        ),
+
+        // Row 4 (Bottom) - 2 circles
+        _buildFloatingCircle(
+          left: screenWidth * 0.25,
+          bottom: 5,
+          size: 75,
+          color: Colors.cyan[100]!,
+        ),
+        _buildFloatingCircle(
+          right: screenWidth * 0.25,
+          bottom: 0,
+          size: 80,
+          color: Colors.amber[100]!,
         ),
       ],
     );
@@ -450,52 +398,36 @@ class _PlanCreationLoadingScreenState extends State<PlanCreationLoadingScreen>
     required double bottom,
     required double size,
     required Color color,
-    required Animation<double> animation,
-    bool centered = false,
   }) {
     return AnimatedBuilder(
-      animation: animation,
+      animation: _floatAnimation,
       builder: (context, child) {
-        Widget circle = Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-            border: Border.all(
-              color: Colors.white,
-              width: 3,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              Icons.person,
-              size: size * 0.5,
-              color: Colors.grey[600],
-            ),
-          ),
-        );
-
-        if (centered) {
-          return Positioned(
-            left: MediaQuery.of(context).size.width / 2 - size / 2,
-            bottom: bottom + animation.value,
-            child: circle,
-          );
-        }
-
         return Positioned(
           left: left,
           right: right,
-          bottom: bottom + animation.value,
-          child: circle,
+          bottom: bottom + _floatAnimation.value,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.person,
+                size: size * 0.45,
+                color: Colors.grey[500],
+              ),
+            ),
+          ),
         );
       },
     );

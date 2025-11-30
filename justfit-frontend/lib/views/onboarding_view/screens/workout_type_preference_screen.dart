@@ -25,10 +25,12 @@ class WorkoutTypePreferenceScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<WorkoutTypePreferenceScreen> createState() => _WorkoutTypePreferenceScreenState();
+  State<WorkoutTypePreferenceScreen> createState() =>
+      _WorkoutTypePreferenceScreenState();
 }
 
-class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScreen>
+class _WorkoutTypePreferenceScreenState
+    extends State<WorkoutTypePreferenceScreen>
     with SingleTickerProviderStateMixin {
   String? _selectedWorkoutType;
 
@@ -45,7 +47,8 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
       'icon': Icons.block,
       'title': 'No equipment',
       'messageTitle': 'Ok, we got it!',
-      'message': 'We will choose workouts that suit your lifestyle with no equipment.',
+      'message':
+          'We will choose workouts that suit your lifestyle with no equipment.',
     },
     {
       'value': 'no_jumping',
@@ -59,14 +62,16 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
       'icon': Icons.airline_seat_flat,
       'title': 'All lying down exercise',
       'messageTitle': 'Ok, we got it!',
-      'message': 'We will offer you a broad suite of workouts without leaving your bed.',
+      'message':
+          'We will offer you a broad suite of workouts without leaving your bed.',
     },
     {
       'value': 'none',
       'icon': Icons.not_interested,
       'title': 'None of all',
       'messageTitle': 'Good!',
-      'message': 'We have achievable programs to progressively build your fitness.',
+      'message':
+          'We have achievable programs to progressively build your fitness.',
     },
   ];
 
@@ -157,7 +162,8 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
                     children: _options.map((option) {
-                      final isSelected = _selectedWorkoutType == option['value'];
+                      final isSelected =
+                          _selectedWorkoutType == option['value'];
                       return Column(
                         children: [
                           _buildWorkoutTypeCard(
@@ -166,14 +172,19 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
                             title: option['title']!,
                             isSelected: isSelected,
                           ),
-                          
-                          // Info box appears below selected option
-                          if (isSelected)
-                            _buildInfoBox(
-                              messageTitle: option['messageTitle']!,
-                              message: option['message']!,
-                            ),
-                          
+
+                          // Info box appears below selected option with animation
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: isSelected
+                                ? _buildInfoBox(
+                                    messageTitle: option['messageTitle']!,
+                                    message: option['message']!,
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+
                           const SizedBox(height: 12),
                         ],
                       );
@@ -239,15 +250,15 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
         _controller.setWorkoutType(value);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFFFFF5F7)
-              : Colors.white,
+          color: isSelected ? const Color(0xFFFFF5F7) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFA2A55) : const Color(0xFFE8E8E8),
+            color:
+                isSelected ? const Color(0xFFFA2A55) : const Color(0xFFE8E8E8),
             width: 1.5,
           ),
           boxShadow: [
@@ -265,7 +276,7 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isSelected 
+                color: isSelected
                     ? const Color(0xFFFA2A55).withOpacity(0.1)
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(10),
@@ -273,7 +284,7 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
               child: Icon(
                 icon,
                 size: 24,
-                color: isSelected 
+                color: isSelected
                     ? const Color(0xFFFA2A55)
                     : const Color(0xFF666666),
               ),
@@ -303,9 +314,7 @@ class _WorkoutTypePreferenceScreenState extends State<WorkoutTypePreferenceScree
     required String messageTitle,
     required String message,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+    return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

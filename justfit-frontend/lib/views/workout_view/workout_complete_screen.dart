@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'heart_rate_measure_screen.dart';
 import 'achievement_screen.dart';
+import '../../core/animations/page_transitions.dart';
 import '../../data/models/achievement_model.dart';
 import '../../controllers/workout_plan_controller.dart';
 import 'streak_screen.dart';
@@ -12,7 +13,6 @@ import '../main_view/main_screen.dart'; // ✅ NEW
 import '../../data/models/workout/workout_exercise.dart';
 import '../../controllers/workout_audio_controller.dart';
 import '../../data/models/workout/simple_workout_models.dart'; // ✅ ADD THIS
-
 
 class WorkoutCompleteScreen extends StatefulWidget {
   final int dayNumber;
@@ -53,7 +53,7 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
   late AnimationController _thumbsUpController;
   late AnimationController _fireworksController;
   late AnimationController _contentController;
-  
+
   late Animation<double> _thumbsUpScale;
   late Animation<double> _thumbsUpRotation;
   late Animation<double> _contentFade;
@@ -62,59 +62,62 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
   List<Firework> _fireworks = [];
   Timer? _fireworkTimer;
 
-@override
-void initState() {
-  super.initState();
+  // ✅ Flag to prevent multiple saves
+  bool _isSaving = false;
 
-  // ✅ Play "Woo-hoo" message with proper async handling
-  Future.delayed(const Duration(milliseconds: 300), () async {
-    try {
-      final audioController = Get.find<WorkoutAudioController>();
-      await audioController.playWorkoutComplete();
-    } catch (e) {
-      print('⚠️ Could not play workout complete audio: $e');
-    }
-  });
-  
-  // Thumbs up animation
-  _thumbsUpController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 800),
-  );
-    
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Play "Woo-hoo" message with proper async handling
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      try {
+        final audioController = Get.find<WorkoutAudioController>();
+        await audioController.playWorkoutComplete();
+      } catch (e) {
+        print('⚠️ Could not play workout complete audio: $e');
+      }
+    });
+
+    // Thumbs up animation
+    _thumbsUpController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     _thumbsUpScale = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _thumbsUpController,
         curve: Curves.elasticOut,
       ),
     );
-    
+
     _thumbsUpRotation = Tween<double>(begin: -0.3, end: 0.0).animate(
       CurvedAnimation(
         parent: _thumbsUpController,
         curve: Curves.easeOut,
       ),
     );
-    
+
     // Fireworks controller (continuous loop)
     _fireworksController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
-    
+
     // Content fade in
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _contentFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _contentController,
         curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
       ),
     );
-    
+
     _contentSlide = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -124,7 +127,7 @@ void initState() {
         curve: Curves.easeOut,
       ),
     );
-    
+
     // Start animations
     _startAnimations();
     _startFireworks();
@@ -133,7 +136,7 @@ void initState() {
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 200));
     _thumbsUpController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 400));
     _contentController.forward();
   }
@@ -141,7 +144,7 @@ void initState() {
   void _startFireworks() {
     // Generate initial fireworks
     _generateFireworks();
-    
+
     // Periodically add new fireworks
     _fireworkTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
       if (mounted) {
@@ -154,7 +157,7 @@ void initState() {
 
   void _generateFireworks() {
     final random = math.Random();
-    
+
     // Add 2-3 new fireworks at random positions
     for (int i = 0; i < 2 + random.nextInt(2); i++) {
       _fireworks.add(
@@ -167,7 +170,7 @@ void initState() {
         ),
       );
     }
-    
+
     // Remove old fireworks (older than 2 seconds)
     _fireworks.removeWhere((fw) {
       return DateTime.now().difference(fw.startTime).inMilliseconds > 2000;
@@ -231,7 +234,7 @@ void initState() {
               },
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: SingleChildScrollView(
@@ -241,7 +244,7 @@ void initState() {
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
-                    
+
                     // Thumbs up emoji with animation
                     AnimatedBuilder(
                       animation: _thumbsUpController,
@@ -268,9 +271,9 @@ void initState() {
                         );
                       },
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Animated content
                     SlideTransition(
                       position: _contentSlide,
@@ -280,7 +283,9 @@ void initState() {
                           children: [
                             // Congrats text - dynamic based on completion
                             Text(
-                              widget.isPartialWorkout ? 'Good Effort!' : 'Congrats!',
+                              widget.isPartialWorkout
+                                  ? 'Good Effort!'
+                                  : 'Congrats!',
                               style: GoogleFonts.poppins(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w800,
@@ -288,12 +293,12 @@ void initState() {
                                 height: 1.2,
                               ),
                             ),
-                            
+
                             const SizedBox(height: 12),
-                            
+
                             // Completion text - dynamic based on completion
                             Text(
-                              widget.isPartialWorkout 
+                              widget.isPartialWorkout
                                   ? 'You completed part of ${widget.workoutName}'
                                   : 'You completed 「${widget.workoutName}」',
                               style: GoogleFonts.poppins(
@@ -304,22 +309,22 @@ void initState() {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            
+
                             const SizedBox(height: 48),
-                            
+
                             // Stats section
                             _buildStatsSection(),
-                            
+
                             const SizedBox(height: 48),
-                            
+
                             // Save and Continue button
                             _buildSaveButton(),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Measure Heart Rate button
                             _buildMeasureHeartRateButton(),
-                            
+
                             const SizedBox(height: 32),
                           ],
                         ),
@@ -409,7 +414,7 @@ void initState() {
     );
   }
 
-    Widget _buildSaveButton() {
+  Widget _buildSaveButton() {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -437,9 +442,19 @@ void initState() {
 
   /// ✅ PRODUCTION-GRADE FLOW HANDLER
   Future<void> _handleSaveAndContinue() async {
+    // ✅ Prevent multiple taps
+    if (_isSaving) {
+      print('⚠️ Already saving workout, ignoring duplicate tap');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
     try {
       final workoutPlanController = Get.find<WorkoutPlanController>();
-      
+
       // ✅ CHECK: Is this a discovery workout or plan workout?
       final isDiscoveryWorkout = widget.discoveryWorkoutId != null;
 
@@ -448,7 +463,7 @@ void initState() {
       if (isDiscoveryWorkout) {
         // ===== DISCOVERY WORKOUT FLOW =====
         print('🔍 Processing DISCOVERY workout completion...');
-        
+
         result = await workoutPlanController.completeDiscoveryWorkout(
           workoutId: widget.discoveryWorkoutId!,
           workoutTitle: widget.discoveryWorkoutTitle ?? 'Discovery Workout',
@@ -459,7 +474,7 @@ void initState() {
       } else {
         // ===== PLAN WORKOUT FLOW (ORIGINAL - UNTOUCHED) =====
         print('📅 Processing PLAN workout completion...');
-        
+
         result = await workoutPlanController.completeWorkout(
           dayNumber: widget.dayNumber,
           caloriesBurned: widget.totalCalories,
@@ -483,22 +498,74 @@ void initState() {
       }
 
       // 2. Get achievements from result (same for both flows)
-      final workoutAchievement = result['workoutAchievement'] as AchievementModel?;
-      final streakAchievement = result['streakAchievement'] as AchievementModel?;
+      final workoutAchievement =
+          result['workoutAchievement'] as AchievementModel?;
+      final streakAchievement =
+          result['streakAchievement'] as AchievementModel?;
       final currentStreak = result['currentStreak'] as int? ?? 0;
       final weeklyProgress = result['weeklyProgress'] as List<bool>? ?? [];
-      
+
       print('🏆 Workout achievement: ${workoutAchievement?.title ?? 'None'}');
       print('🔥 Streak achievement: ${streakAchievement?.title ?? 'None'}');
       print('🔥 Current streak: $currentStreak days');
 
       if (!mounted) return;
 
-      // 3. NAVIGATION FLOW (same for both)
-      
-      // If partial workout - go straight to activity (no achievements/streaks)
+      // 3. NAVIGATION FLOW
+
+      // ✅ Check for workout count achievement FIRST (even for partial workouts)
+      if (workoutAchievement != null) {
+        // Show workout achievement
+        Navigator.pushReplacement(
+          context,
+          PageTransitions.scale(
+            AchievementScreen(
+              achievement: workoutAchievement,
+              onContinue: () {
+                // After workout achievement
+                if (widget.isPartialWorkout) {
+                  // Partial workout - skip streak screen, go to activity
+                  print(
+                      '⚠️ Partial workout - skipping streak screen after achievement');
+                  // Use pushAndRemoveUntil to clear entire stack
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const MainScreen(initialIndex: 2),
+                    ),
+                    (route) => false,
+                  );
+                } else if (currentStreak >= 1) {
+                  // Full workout - show streak screen
+                  Navigator.of(context).pushReplacement(
+                    PageTransitions.fadeSlideFromRight(
+                      StreakScreen(
+                        currentStreak: currentStreak,
+                        weeklyProgress: weeklyProgress,
+                        achievement: streakAchievement,
+                      ),
+                      durationMs: 300,
+                    ),
+                  );
+                } else {
+                  // No streak - go to activity
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const MainScreen(initialIndex: 2),
+                    ),
+                    (route) => false,
+                  );
+                }
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
+      // No workout achievement
       if (widget.isPartialWorkout) {
-        print('⚠️ Partial workout - navigating to Activity');
+        // Partial workout with no achievement - go straight to activity
+        print('⚠️ Partial workout (no achievement) - navigating to Activity');
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => const MainScreen(initialIndex: 2),
@@ -508,43 +575,17 @@ void initState() {
         return;
       }
 
-      // FULL WORKOUT - Check for workout count achievement first
-      if (workoutAchievement != null) {
-        // Show workout achievement → then streak screen → then streak achievement (if any) → activity
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AchievementScreen(
-              achievement: workoutAchievement,
-              onContinue: () {
-                // After workout achievement, show streak screen
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => StreakScreen(
-                      currentStreak: currentStreak,
-                      weeklyProgress: weeklyProgress,
-                      achievement: streakAchievement,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-        return;
-      }
-
-      // No workout achievement - go straight to streak screen
+      // Full workout with no workout achievement - go to streak screen
       if (currentStreak >= 1) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => StreakScreen(
+          PageTransitions.fadeSlideFromRight(
+            StreakScreen(
               currentStreak: currentStreak,
               weeklyProgress: weeklyProgress,
               achievement: streakAchievement,
             ),
+            durationMs: 300,
           ),
         );
       } else {
@@ -566,6 +607,13 @@ void initState() {
           ),
           (route) => false,
         );
+      }
+    } finally {
+      // ✅ Reset flag in case of error (though navigation should remove screen)
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }
@@ -621,9 +669,6 @@ void initState() {
 //   }
 //   return null;
 // }
-
-
-
 
   Widget _buildMeasureHeartRateButton() {
     return SizedBox(
@@ -708,34 +753,35 @@ class FireworksPainter extends CustomPainter {
     for (final firework in fireworks) {
       final age = DateTime.now().difference(firework.startTime).inMilliseconds;
       final progress = (age / 2000.0).clamp(0.0, 1.0); // 2 second duration
-      
+
       if (progress >= 1.0) continue;
-      
+
       final centerX = size.width * firework.x;
       final centerY = size.height * firework.y;
-      
+
       // Draw particles in a circle pattern
       for (int i = 0; i < firework.particleCount; i++) {
         final angle = (2 * math.pi * i) / firework.particleCount;
-        
+
         // Particle expands outward and fades
-        final distance = 30 * progress * (1.2 - progress * 0.5); // Expands then slows
+        final distance =
+            30 * progress * (1.2 - progress * 0.5); // Expands then slows
         final opacity = (1.0 - progress) * 0.6; // Fades out
-        
+
         final x = centerX + math.cos(angle) * distance;
         final y = centerY + math.sin(angle) * distance;
-        
+
         // Draw particle as small line/dash
         final paint = Paint()
           ..color = firework.color.withOpacity(opacity)
           ..strokeWidth = 2.5
           ..strokeCap = StrokeCap.round;
-        
+
         // Draw a small dash pointing outward
         final dashLength = 8.0;
         final endX = x + math.cos(angle) * dashLength;
         final endY = y + math.sin(angle) * dashLength;
-        
+
         canvas.drawLine(
           Offset(x, y),
           Offset(endX, endY),
