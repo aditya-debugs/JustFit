@@ -31,8 +31,7 @@ class ActivityLevelSelectionScreen extends StatefulWidget {
 }
 
 class _ActivityLevelSelectionScreenState
-    extends State<ActivityLevelSelectionScreen>
-    with TickerProviderStateMixin {
+    extends State<ActivityLevelSelectionScreen> with TickerProviderStateMixin {
   late PageController _pageController;
   int _currentIndex = 0;
   late AnimationController _fadeController;
@@ -72,16 +71,15 @@ class _ActivityLevelSelectionScreenState
   @override
   void initState() {
     super.initState();
-    
+
     // Load previously selected value from controller
     final savedValue = _controller.activityLevel.value;
     if (savedValue != null) {
-      _currentIndex = _activityLevels.indexWhere(
-        (level) => level['value'] == savedValue
-      );
+      _currentIndex =
+          _activityLevels.indexWhere((level) => level['value'] == savedValue);
       if (_currentIndex == -1) _currentIndex = 0;
     }
-    
+
     _pageController = PageController(
       viewportFraction: 0.6,
       initialPage: _currentIndex,
@@ -143,7 +141,8 @@ class _ActivityLevelSelectionScreenState
     if (widget.onNext != null) {
       // Save to controller before proceeding
       _controller.setActivityLevel(_activityLevels[_currentIndex]['value']);
-      print('Activity level selected: ${_activityLevels[_currentIndex]['value']}');
+      print(
+          'Activity level selected: ${_activityLevels[_currentIndex]['value']}');
       widget.onNext!();
     }
   }
@@ -211,37 +210,37 @@ class _ActivityLevelSelectionScreenState
 
                         const Spacer(),
 
-              // Next button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  width: double.infinity,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF000000),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _handleNext,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Center(
-                        child: Text(
-                          'Next',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                        // Next button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Container(
+                            width: double.infinity,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF000000),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _handleNext,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Center(
+                                  child: Text(
+                                    'Next',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 32),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -345,7 +344,7 @@ class _ActivityLevelSelectionScreenState
 
   Widget _buildAnimatedIcon(int index, bool isCenter) {
     final iconData = _activityLevels[index]['icon'] as IconData;
-    
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 1500),
@@ -374,7 +373,8 @@ class _ActivityLevelSelectionScreenState
             child: Icon(
               iconData,
               size: isCenter ? 80 : 60,
-              color: isCenter ? const Color(0xFFFA2A55) : const Color(0xFFFFB3C6),
+              color:
+                  isCenter ? const Color(0xFFFA2A55) : const Color(0xFFFFB3C6),
             ),
           ),
         );
@@ -389,12 +389,12 @@ class _ActivityLevelSelectionScreenState
   }
 
   Widget _buildCustomSlider() {
-  return CustomDotSlider(
-    totalDots: 4,
-    selectedIndex: _currentIndex,
-    onChanged: _onSliderChanged,
-    leftLabel: 'Not active',
-    rightLabel: 'Highly active',
-  );
-}
+    return CustomDotSlider(
+      totalDots: 4,
+      selectedIndex: _currentIndex,
+      onChanged: _onSliderChanged,
+      leftLabel: 'Not active',
+      rightLabel: 'Highly active',
+    );
+  }
 }

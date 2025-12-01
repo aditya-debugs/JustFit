@@ -22,14 +22,14 @@ class _MotivationScreen2State extends State<MotivationScreen2>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Get controller instance
   late final OnboardingController _controller;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize controller
     _controller = Get.find<OnboardingController>();
 
@@ -62,7 +62,7 @@ class _MotivationScreen2State extends State<MotivationScreen2>
   void _handleAnswer(bool answer) {
     // Save to controller
     _controller.setAttractiveBodyDesire(answer);
-    
+
     // Call parent callback
     widget.onNext?.call(answer);
   }
@@ -123,7 +123,8 @@ class _MotivationScreen2State extends State<MotivationScreen2>
 
                                     // Question text
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 32.0),
                                       child: Text(
                                         'Do you wanna\nget an attractive\nbody?',
                                         textAlign: TextAlign.center,

@@ -120,7 +120,8 @@ class _MotivationScreen1State extends State<MotivationScreen1>
 
                                     // Question text
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 32.0),
                                       child: Text(
                                         'Do you wanna\nlose weight?',
                                         textAlign: TextAlign.center,

@@ -71,9 +71,8 @@ class _FitnessLevelSelectionScreenState
     // Load previously selected value from controller
     final savedValue = _controller.fitnessLevel.value;
     if (savedValue != null) {
-      _selectedLevel = _fitnessLevels.indexWhere(
-        (level) => level['value'] == savedValue
-      );
+      _selectedLevel =
+          _fitnessLevels.indexWhere((level) => level['value'] == savedValue);
       if (_selectedLevel == -1) _selectedLevel = 0;
     }
 
@@ -111,7 +110,8 @@ class _FitnessLevelSelectionScreenState
     if (widget.onNext != null) {
       // Save to controller before proceeding
       _controller.setFitnessLevel(_fitnessLevels[_selectedLevel]['value']);
-      print('Fitness level selected: ${_fitnessLevels[_selectedLevel]['value']}');
+      print(
+          'Fitness level selected: ${_fitnessLevels[_selectedLevel]['value']}');
       widget.onNext!();
     }
   }
@@ -140,97 +140,97 @@ class _FitnessLevelSelectionScreenState
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                    const SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
-                    // Title
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Text(
-                        'What\'s your fitness level?',
-                        style: GoogleFonts.poppins(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF000000),
-                          height: 1.3,
+                        // Title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            'What\'s your fitness level?',
+                            style: GoogleFonts.poppins(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF000000),
+                              height: 1.3,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
 
-                    const SizedBox(height: 80),
+                        const SizedBox(height: 80),
 
-                    // Circular progress ring with fire icon
-                    _buildCircularProgress(),
+                        // Circular progress ring with fire icon
+                        _buildCircularProgress(),
 
-                    const SizedBox(height: 80),
+                        const SizedBox(height: 80),
 
-                    // Level title
-                    Text(
-                      _fitnessLevels[_selectedLevel]['title'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF000000),
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Level description
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                      child: Text(
-                        _fitnessLevels[_selectedLevel]['description'],
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF999999),
-                          height: 1.4,
+                        // Level title
+                        Text(
+                          _fitnessLevels[_selectedLevel]['title'],
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF000000),
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
 
-                    const SizedBox(height: 60),
+                        const SizedBox(height: 8),
 
-                    // Smart slider
-                    _buildSmartSlider(),
-
-                    const Spacer(),
-
-                    // Next button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Container(
-                        width: double.infinity,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF000000),
-                          borderRadius: BorderRadius.circular(14),
+                        // Level description
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                          child: Text(
+                            _fitnessLevels[_selectedLevel]['description'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF999999),
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _handleNext,
-                            borderRadius: BorderRadius.circular(14),
-                            child: Center(
-                              child: Text(
-                                'Next',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+
+                        const SizedBox(height: 60),
+
+                        // Smart slider
+                        _buildSmartSlider(),
+
+                        const Spacer(),
+
+                        // Next button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Container(
+                            width: double.infinity,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF000000),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _handleNext,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Center(
+                                  child: Text(
+                                    'Next',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 32),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -245,7 +245,7 @@ class _FitnessLevelSelectionScreenState
 
   Widget _buildCircularProgress() {
     final progress = _fitnessLevels[_selectedLevel]['progress'] as double;
-    
+
     return SizedBox(
       width: 220,
       height: 220,
@@ -299,20 +299,20 @@ class _FitnessLevelSelectionScreenState
     }
   }
 
-Widget _buildSmartSlider() {
-  return CustomDotSlider(
-    totalDots: 3,
-    selectedIndex: _selectedLevel,
-    onChanged: (index) {
-      setState(() {
-        _selectedLevel = index;
-      });
-      _controller.setFitnessLevel(_fitnessLevels[index]['value']);
-    },
-    leftLabel: 'Beginner',
-    rightLabel: 'Advanced',
-  );
-}
+  Widget _buildSmartSlider() {
+    return CustomDotSlider(
+      totalDots: 3,
+      selectedIndex: _selectedLevel,
+      onChanged: (index) {
+        setState(() {
+          _selectedLevel = index;
+        });
+        _controller.setFitnessLevel(_fitnessLevels[index]['value']);
+      },
+      leftLabel: 'Beginner',
+      rightLabel: 'Advanced',
+    );
+  }
 }
 
 // Custom painter for gradient circular progress
@@ -368,7 +368,8 @@ class GradientCircularProgressPainter extends CustomPainter {
     );
 
     final paint = Paint()
-      ..shader = gradient.createShader(Rect.fromCircle(center: center, radius: radius))
+      ..shader =
+          gradient.createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;

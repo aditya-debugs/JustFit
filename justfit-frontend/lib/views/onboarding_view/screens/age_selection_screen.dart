@@ -35,10 +35,10 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen>
     with SingleTickerProviderStateMixin {
   // ✅ ADDED CONTROLLER
   final OnboardingController _controller = Get.find<OnboardingController>();
-  
+
   late FixedExtentScrollController _scrollController;
   int _selectedAge = 24; // Default age
-  
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -50,10 +50,10 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // ✅ LOAD SAVED AGE FROM CONTROLLER
     _selectedAge = _controller.age.value;
-    
+
     // Initialize scroll controller to start at saved age
     _scrollController = FixedExtentScrollController(
       initialItem: _selectedAge - minAge,
@@ -93,10 +93,10 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen>
   void _handleNext() {
     // ✅ SAVE AGE TO CONTROLLER
     _controller.setAge(_selectedAge);
-    
+
     print('Selected age: $_selectedAge');
     print('✅ Saved to controller');
-    
+
     if (widget.onNext != null) {
       widget.onNext!();
     }
@@ -145,7 +145,8 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen>
                         // Info card
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 24),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF9E6),
                             borderRadius: BorderRadius.circular(12),
@@ -178,102 +179,106 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen>
 
                         const Spacer(),
 
-              // Age wheel picker with fixed "years old" label
-              SizedBox(
-                height: 250,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Wheel picker (numbers only)
-                    ListWheelScrollView.useDelegate(
-                      controller: _scrollController,
-                      itemExtent: 60,
-                      diameterRatio: 1.5,
-                      perspective: 0.002,
-                      physics: const FixedExtentScrollPhysics(),
-                      onSelectedItemChanged: (index) {
-                        setState(() {
-                          _selectedAge = minAge + index;
-                        });
-                        // ✅ SAVE TO CONTROLLER ON CHANGE
-                        _controller.setAge(_selectedAge);
-                      },
-                      childDelegate: ListWheelChildBuilderDelegate(
-                        builder: (context, index) {
-                          if (index < 0 || index >= (maxAge - minAge + 1)) {
-                            return null;
-                          }
-                          final age = minAge + index;
-                          final isSelected = age == _selectedAge;
-                          
-                          return Center(
-                            child: Text(
-                              age.toString(),
-                              style: GoogleFonts.poppins(
-                                fontSize: isSelected ? 48 : 36,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                                color: isSelected
-                                    ? const Color(0xFF000000)
-                                    : const Color(0xFFCCCCCC),
-                                height: 1.0,
+                        // Age wheel picker with fixed "years old" label
+                        SizedBox(
+                          height: 250,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Wheel picker (numbers only)
+                              ListWheelScrollView.useDelegate(
+                                controller: _scrollController,
+                                itemExtent: 60,
+                                diameterRatio: 1.5,
+                                perspective: 0.002,
+                                physics: const FixedExtentScrollPhysics(),
+                                onSelectedItemChanged: (index) {
+                                  setState(() {
+                                    _selectedAge = minAge + index;
+                                  });
+                                  // ✅ SAVE TO CONTROLLER ON CHANGE
+                                  _controller.setAge(_selectedAge);
+                                },
+                                childDelegate: ListWheelChildBuilderDelegate(
+                                  builder: (context, index) {
+                                    if (index < 0 ||
+                                        index >= (maxAge - minAge + 1)) {
+                                      return null;
+                                    }
+                                    final age = minAge + index;
+                                    final isSelected = age == _selectedAge;
+
+                                    return Center(
+                                      child: Text(
+                                        age.toString(),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: isSelected ? 48 : 36,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
+                                          color: isSelected
+                                              ? const Color(0xFF000000)
+                                              : const Color(0xFFCCCCCC),
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  childCount: maxAge - minAge + 1,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        childCount: maxAge - minAge + 1,
-                      ),
-                    ),
-                    
-                    // Fixed "years old" label positioned to the right of center
-                    Positioned(
-                      left: MediaQuery.of(context).size.width / 2 + 40,
-                      child: Text(
-                        'years old',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF666666),
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              const Spacer(),
-
-              // Next button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  width: double.infinity,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF000000),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _handleNext,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Center(
-                        child: Text(
-                          'Next',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                              // Fixed "years old" label positioned to the right of center
+                              Positioned(
+                                left:
+                                    MediaQuery.of(context).size.width / 2 + 40,
+                                child: Text(
+                                  'years old',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w400,
+                                    color: const Color(0xFF666666),
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 32),
+                        const Spacer(),
+
+                        // Next button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Container(
+                            width: double.infinity,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF000000),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _handleNext,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Center(
+                                  child: Text(
+                                    'Next',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
