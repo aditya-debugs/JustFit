@@ -130,100 +130,113 @@ class _FitnessLevelSelectionScreenState
         position: _slideAnimation,
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'What\'s your fitness level?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF000000),
-                    height: 1.3,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                    const SizedBox(height: 40),
 
-              const SizedBox(height: 80),
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text(
+                        'What\'s your fitness level?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF000000),
+                          height: 1.3,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
 
-              // Circular progress ring with fire icon
-              _buildCircularProgress(),
+                    const SizedBox(height: 80),
 
-              const SizedBox(height: 80),
+                    // Circular progress ring with fire icon
+                    _buildCircularProgress(),
 
-              // Level title
-              Text(
-                _fitnessLevels[_selectedLevel]['title'],
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF000000),
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
+                    const SizedBox(height: 80),
 
-              const SizedBox(height: 8),
+                    // Level title
+                    Text(
+                      _fitnessLevels[_selectedLevel]['title'],
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF000000),
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
 
-              // Level description
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                child: Text(
-                  _fitnessLevels[_selectedLevel]['description'],
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF999999),
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+                    const SizedBox(height: 8),
 
-              const SizedBox(height: 60),
+                    // Level description
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                      child: Text(
+                        _fitnessLevels[_selectedLevel]['description'],
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF999999),
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
 
-              // Smart slider
-              _buildSmartSlider(),
+                    const SizedBox(height: 60),
 
-              const Spacer(),
+                    // Smart slider
+                    _buildSmartSlider(),
 
-              // Next button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  width: double.infinity,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF000000),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _handleNext,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Center(
-                        child: Text(
-                          'Next',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    const Spacer(),
+
+                    // Next button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Container(
+                        width: double.infinity,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000000),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _handleNext,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Center(
+                              child: Text(
+                                'Next',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 32),
-            ],
+              );
+            },
           ),
         ),
       ),

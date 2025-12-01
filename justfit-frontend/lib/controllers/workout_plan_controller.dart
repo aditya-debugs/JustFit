@@ -219,8 +219,9 @@ class WorkoutPlanController extends GetxController {
   /// ========== ENHANCED STREAK MANAGEMENT WITH FIRESTORE ==========
 
   /// Update streak after completing a workout with smart logic + Firestore
-  Future<AchievementModel?> updateStreakAfterWorkout(int? dayNumber) async {
+  Future<Map<String, dynamic>> updateStreakAfterWorkout(int? dayNumber) async {
     // dayNumber is null for discovery workouts, has value for plan workouts
+    // Returns: {'achievement': AchievementModel?, 'incremented': bool}
     try {
       print(
           '🔥 Updating streak after workout (Day: ${dayNumber ?? 'Discovery'})');
@@ -231,7 +232,7 @@ class WorkoutPlanController extends GetxController {
 
       if (user == null) {
         print('⚠️ No user logged in');
-        return null;
+        return {'achievement': null, 'incremented': false};
       }
 
       // Check if this is a new workout today
@@ -244,12 +245,15 @@ class WorkoutPlanController extends GetxController {
 
         // If already worked out today, don't increment BUT still return current data
         if (lastDate.isAtSameMomentAs(today)) {
-          print('⚠️ Already worked out today, streak not incremented');
+          print('⚠️ Already worked out today, streak NOT incremented');
           // Still update weekly progress for today (in case it wasn't set)
           final weekday = now.weekday % 7; // Sunday = 0, Saturday = 6
           weeklyProgress[weekday] = true;
           weeklyProgress.refresh();
-          return null; // No new achievement, but weekly progress is maintained
+          return {
+            'achievement': null,
+            'incremented': false
+          }; // ✅ Streak was NOT incremented
         }
 
         // Check if streak should be reset (missed a day)
@@ -325,10 +329,13 @@ class WorkoutPlanController extends GetxController {
         }
       }
 
-      return achievement;
+      return {
+        'achievement': achievement,
+        'incremented': true
+      }; // ✅ Streak WAS incremented
     } catch (e) {
       print('❌ Error updating streak: $e');
-      return null;
+      return {'achievement': null, 'incremented': false};
     }
   }
 
@@ -519,7 +526,9 @@ class WorkoutPlanController extends GetxController {
       workoutAchievement = await _checkWorkoutCountAchievement();
 
       // ✅ ALWAYS update streak (partial or full workouts both count for daily streak)
-      streakAchievement = await updateStreakAfterWorkout(dayNumber);
+      final streakResult = await updateStreakAfterWorkout(dayNumber);
+      streakAchievement = streakResult['achievement'] as AchievementModel?;
+      final streakIncremented = streakResult['incremented'] as bool;
 
       // 2. Only mark day complete for FULL workouts
       if (isFullCompletion) {
@@ -538,6 +547,7 @@ class WorkoutPlanController extends GetxController {
         'success': true,
         'workoutAchievement': workoutAchievement,
         'streakAchievement': streakAchievement,
+        'streakIncremented': streakIncremented, // ✅ NEW
         'currentStreak': userStreak.value,
         'weeklyProgress': weeklyProgress.toList(),
       };
@@ -586,8 +596,11 @@ class WorkoutPlanController extends GetxController {
 
       // 2. Update streak (shared between plan and discovery workouts)
       // This ensures streak increments once per day regardless of workout source
-      final streakAchievement =
+      final streakResult =
           await updateStreakAfterWorkout(null); // null = not tied to plan day
+      final streakAchievement =
+          streakResult['achievement'] as AchievementModel?;
+      final streakIncremented = streakResult['incremented'] as bool;
 
       // 3. Check workout count achievement (counts all workouts)
       final workoutAchievement = await _checkWorkoutCountAchievement();
@@ -604,6 +617,7 @@ class WorkoutPlanController extends GetxController {
         'success': true,
         'workoutAchievement': workoutAchievement,
         'streakAchievement': streakAchievement,
+        'streakIncremented': streakIncremented, // ✅ NEW
         'currentStreak': userStreak.value,
         'weeklyProgress': weeklyProgress.toList(),
       };
@@ -625,7 +639,7 @@ class WorkoutPlanController extends GetxController {
         return;
       }
 
-      print('🔥 _updateProgressStats called:');
+      print('🔍 ========== UPDATING PROGRESS STATS ==========');
       print('   Duration: $durationMinutes min');
       print('   Calories: $caloriesBurned cal');
       print('   User: $userId');
@@ -797,22 +811,27 @@ class WorkoutPlanController extends GetxController {
   /// ✅ Check for workout count achievements
   Future<AchievementModel?> _checkWorkoutCountAchievement() async {
     try {
+      print('🔍 ========== CHECKING WORKOUT COUNT ACHIEVEMENT ==========');
+
       // Get total AFTER stats update (current count already includes this workout)
       final total = await getTotalWorkoutsCompleted();
 
-      // Check if THIS workout count triggers an achievement
       print('🏋️ Total workouts completed (after update): $total');
-      final nextTotal = total; // The count is already updated
 
-      final achievement = AchievementModel.getByWorkoutCount(nextTotal);
+      // Check if THIS workout count triggers an achievement
+      final achievement = AchievementModel.getByWorkoutCount(total);
 
       if (achievement != null) {
-        print('🏆 Workout count achievement earned: ${achievement.title}');
+        print('🏆 ✅ ACHIEVEMENT TRIGGERED: ${achievement.title}');
+        print('   Badge Number: ${achievement.badgeNumber}');
+        print('   Description: ${achievement.description}');
 
         // Save to Firestore (check if already exists first)
         final userId = _userService.currentUser.value?.uid;
         if (userId != null) {
-          final achievementId = 'workout_$nextTotal';
+          final achievementId = 'workout_$total';
+
+          print('   Checking if achievement already exists: $achievementId');
 
           // Check if already earned
           final alreadyExists = await _firestoreService.hasAchievement(
@@ -820,7 +839,10 @@ class WorkoutPlanController extends GetxController {
             achievementId: achievementId,
           );
 
+          print('   Already exists in Firestore: $alreadyExists');
+
           if (!alreadyExists) {
+            print('   💾 Saving achievement to Firestore...');
             await _firestoreService.saveAchievement(
               userId: userId,
               achievementId: achievementId,
@@ -829,16 +851,21 @@ class WorkoutPlanController extends GetxController {
               description: achievement.description,
               badgeNumber: achievement.badgeNumber,
             );
-            print('✅ Achievement saved: ${achievement.title}');
+            print('   ✅ Achievement saved successfully!');
           } else {
-            print('ℹ️ Achievement already exists, skipping save');
+            print('   ⚠️ Achievement already exists, not showing again');
+            return null; // ✅ FIX: Return null if already exists to prevent re-showing
           }
         }
+      } else {
+        print('   ℹ️ No achievement triggered for workout count: $total');
       }
 
+      print('========================================================');
       return achievement;
     } catch (e) {
       print('❌ Error checking workout achievement: $e');
+      print('   Stack trace: ${StackTrace.current}');
       return null;
     }
   }

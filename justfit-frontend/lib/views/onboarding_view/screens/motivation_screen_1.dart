@@ -105,33 +105,46 @@ class _MotivationScreen1State extends State<MotivationScreen1>
                     opacity: _fadeAnimation,
                     child: SlideTransition(
                       position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          // Spacer to push content down
-                          const Spacer(),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: IntrinsicHeight(
+                                child: Column(
+                                  children: [
+                                    // Spacer to push content down
+                                    const Spacer(),
 
-                          // Question text
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                            child: Text(
-                              'Do you wanna\nlose weight?',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                height: 1.2,
+                                    // Question text
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                                      child: Text(
+                                        'Do you wanna\nlose weight?',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 40),
+
+                                    // Yes/No buttons
+                                    _buildButtons(),
+
+                                    const SizedBox(height: 40),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-
-                          const SizedBox(height: 40),
-
-                          // Yes/No buttons
-                          _buildButtons(),
-
-                          const SizedBox(height: 40),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),

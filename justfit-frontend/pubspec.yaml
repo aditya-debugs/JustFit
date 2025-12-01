@@ -1,12 +1,12 @@
 name: justfit
 description: A new Flutter project.
 
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -24,13 +24,14 @@ dependencies:
   http: ^1.1.0
   camera: ^0.10.5+5
   permission_handler: ^11.0.1
-  intl: ^0.18.0  # For date formatting
+  intl: ^0.18.0 # For date formatting
   image_picker: ^1.0.7
   flutter_tts: ^3.8.5
   just_audio: ^0.9.36
   shared_preferences: ^2.2.2
   url_launcher: ^6.2.2
-  video_player: ^2.8.2  # For video playback
+  video_player: ^2.8.2 # For video playback
+  wakelock_plus: ^1.2.0 # Keep screen awake during workout
 
 dev_dependencies:
   flutter_test:
@@ -43,10 +44,10 @@ flutter:
   assets:
     # Onboarding images
     - assets/images/onboarding/
-    
+
     # Audio files
     - assets/audio/
-    
+
     # Day card images (My Plan screen)
     - assets/images/day_1.jpeg
     - assets/images/day_2.jpeg
@@ -57,42 +58,42 @@ flutter:
     - assets/workout_jsons/video_1.mp4
     - assets/workout_jsons/video_2.mp4
     - assets/workout_jsons/video_3.mp4
-    
+
     # Body specific circle images (Discovery)
     - assets/images/discovery_body_1.jpeg
     - assets/images/discovery_body_2.jpeg
-    
+
     # Knee Friendly workout images
     - assets/images/knee_friendly_1.jpeg
     - assets/images/knee_friendly_2.jpeg
     - assets/images/knee_friendly_3.jpeg
-    
+
     # Belly workout images
     - assets/images/belly_1.jpeg
     - assets/images/belly_2.jpeg
     - assets/images/belly_3.jpeg
-    
+
     # Plus Size workout images
     - assets/images/plus_size_1.jpeg
     - assets/images/plus_size_2.jpeg
     - assets/images/plus_size_3.jpeg
-    
+
     # Healthy/Wellness workout images
     - assets/images/healthy_1.jpeg
     - assets/images/healthy_2.jpeg
-    
+
     # Strengthen & Stretch workout images
     - assets/images/strengthen_1.jpeg
     - assets/images/strengthen_2.jpeg
-    
+
     # Seat/Chair workout images
     - assets/images/seat_1.jpeg
     - assets/images/seat_2.jpeg
-    
+
     # Lose Weight workout images
     - assets/images/lose_weight_1.jpeg
     - assets/images/lose_weight_2.jpeg
-    
+
     # Dance card images (small workout cards)
     - assets/images/dance_card_1.jpeg
     - assets/images/dance_card_2.jpeg

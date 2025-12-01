@@ -162,46 +162,54 @@ class _ActivityLevelSelectionScreenState
         position: _slideAnimation,
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Choose your activity level',
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF000000),
-                    height: 1.3,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 40),
 
-              const SizedBox(height: 60),
+                        // Title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            'Choose your activity level',
+                            style: GoogleFonts.poppins(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF000000),
+                              height: 1.3,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
 
-              // Carousel
-              SizedBox(
-                height: 320,
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: _onPageChanged,
-                  itemCount: _activityLevels.length,
-                  itemBuilder: (context, index) {
-                    return _buildCarouselItem(index);
-                  },
-                ),
-              ),
+                        const SizedBox(height: 60),
 
-              const SizedBox(height: 40),
+                        // Carousel
+                        SizedBox(
+                          height: 320,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            onPageChanged: _onPageChanged,
+                            itemCount: _activityLevels.length,
+                            itemBuilder: (context, index) {
+                              return _buildCarouselItem(index);
+                            },
+                          ),
+                        ),
 
-              // Slider
-              _buildCustomSlider(),
+                        const SizedBox(height: 40),
 
-              const Spacer(),
+                        // Slider
+                        _buildCustomSlider(),
+
+                        const Spacer(),
 
               // Next button
               Padding(
@@ -234,7 +242,12 @@ class _ActivityLevelSelectionScreenState
               ),
 
               const SizedBox(height: 32),
-            ],
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),

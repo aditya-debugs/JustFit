@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class FirestoreService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ==================== WORKOUT COMPLETION ====================
-  
+
   /// Save a completed workout to Firestore
   Future<void> saveWorkoutCompletion({
     required String userId,
@@ -38,7 +39,7 @@ class FirestoreService extends GetxService {
         'isComplete': isComplete,
         'completedAt': FieldValue.serverTimestamp(),
       };
-      
+
       // Add optional fields for discovery workouts
       if (workoutTitle != null) {
         data['workoutTitle'] = workoutTitle;
@@ -46,10 +47,11 @@ class FirestoreService extends GetxService {
       if (workoutCategory != null) {
         data['workoutCategory'] = workoutCategory;
       }
-      
+
       await docRef.set(data);
 
-      print('✅ Workout saved to Firestore: Day $day, $duration min, $calories cal');
+      print(
+          '✅ Workout saved to Firestore: Day $day, $duration min, $calories cal');
     } catch (e) {
       print('❌ Error saving workout: $e');
       rethrow;
@@ -83,7 +85,7 @@ class FirestoreService extends GetxService {
   }) async {
     try {
       final today = DateTime.now().toIso8601String().split('T')[0];
-      
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -99,7 +101,7 @@ class FirestoreService extends GetxService {
   }
 
   // ==================== STREAK MANAGEMENT ====================
-  
+
   /// Update user's streak after workout completion
   Future<void> updateStreak({
     required String userId,
@@ -156,7 +158,7 @@ class FirestoreService extends GetxService {
   }
 
   // ==================== ACHIEVEMENTS ====================
-  
+
   /// Save an earned achievement
   Future<void> saveAchievement({
     required String userId,
@@ -229,7 +231,7 @@ class FirestoreService extends GetxService {
   }
 
   // ==================== USER STATS ====================
-  
+
   /// Get aggregated user statistics
   Future<Map<String, dynamic>> getUserStats({
     required String userId,
@@ -275,8 +277,8 @@ class FirestoreService extends GetxService {
     }
   }
 
-    // ========== WEIGHT TRACKING ==========
-  
+  // ========== WEIGHT TRACKING ==========
+
   /// Log a weight entry
   Future<void> logWeight({
     required String userId,
@@ -286,7 +288,7 @@ class FirestoreService extends GetxService {
     try {
       final logDate = date ?? DateTime.now();
       final docId = '${logDate.year}_${logDate.month}_${logDate.day}';
-      
+
       await _firestore
           .collection('users')
           .doc(userId)
@@ -302,7 +304,7 @@ class FirestoreService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Get weight history for a specific month
   Future<List<Map<String, dynamic>>> getWeightHistory({
     required String userId,
@@ -311,7 +313,7 @@ class FirestoreService extends GetxService {
   }) async {
     try {
       print('⚖️ Querying weight history for $year-$month');
-      
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -324,7 +326,7 @@ class FirestoreService extends GetxService {
       print('⚖️ Found ${snapshot.docs.length} weight entries in Firestore');
 
       final List<Map<String, dynamic>> history = [];
-      
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final timestamp = data['date'] as Timestamp;
@@ -345,7 +347,7 @@ class FirestoreService extends GetxService {
   Future<List<Map<String, dynamic>>> getAllWeightHistory(String userId) async {
     try {
       print('⚖️ Fetching ALL weight history for timeline');
-      
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -355,7 +357,7 @@ class FirestoreService extends GetxService {
       print('⚖️ Found ${snapshot.docs.length} total weight entries');
 
       final List<Map<String, dynamic>> history = [];
-      
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final timestamp = data['date'] as Timestamp;
@@ -366,7 +368,8 @@ class FirestoreService extends GetxService {
       }
 
       // Sort by date
-      history.sort((a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
+      history.sort(
+          (a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
 
       return history;
     } catch (e) {
@@ -374,31 +377,29 @@ class FirestoreService extends GetxService {
       return [];
     }
   }
-  
+
   /// Get user's weight goal
   Future<double?> getWeightGoal(String userId) async {
     try {
       print('🎯 Fetching goal weight...');
-      
+
       // First check top-level goalWeight field
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get();
-      
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+
       if (userDoc.exists) {
         final data = userDoc.data();
-        
+
         // Check top-level goalWeight
         if (data?['goalWeight'] != null) {
           final goal = (data!['goalWeight'] as num).toDouble();
           print('🎯 Found goal in profile: $goal kg');
           return goal;
         }
-        
+
         // Check nested onboardingData
         if (data?['onboardingData'] != null) {
-          final onboardingData = data!['onboardingData'] as Map<String, dynamic>;
+          final onboardingData =
+              data!['onboardingData'] as Map<String, dynamic>;
           if (onboardingData['goalWeight'] != null) {
             final goal = (onboardingData['goalWeight'] as num).toDouble();
             print('🎯 Found goal in onboardingData: $goal kg');
@@ -406,7 +407,7 @@ class FirestoreService extends GetxService {
           }
         }
       }
-      
+
       // Fallback: check goals collection
       final doc = await _firestore
           .collection('users')
@@ -414,13 +415,13 @@ class FirestoreService extends GetxService {
           .collection('goals')
           .doc('weight_goal')
           .get();
-      
+
       if (doc.exists && doc.data()?['targetWeight'] != null) {
         final goal = (doc.data()!['targetWeight'] as num).toDouble();
         print('🎯 Found goal in goals collection: $goal kg');
         return goal;
       }
-      
+
       print('⚠️ No goal weight found');
       return null;
     } catch (e) {
@@ -438,7 +439,7 @@ class FirestoreService extends GetxService {
     try {
       final entryDate = date ?? DateTime.now();
       final docId = '${entryDate.year}_${entryDate.month}_${entryDate.day}';
-      
+
       await _firestore
           .collection('users')
           .doc(userId)
@@ -453,13 +454,14 @@ class FirestoreService extends GetxService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Weight entry saved: $weight kg on ${entryDate.year}-${entryDate.month}-${entryDate.day}');
+      print(
+          '✅ Weight entry saved: $weight kg on ${entryDate.year}-${entryDate.month}-${entryDate.day}');
     } catch (e) {
       print('❌ Error saving weight entry: $e');
       rethrow;
     }
   }
-  
+
   /// Set user's weight goal
   Future<void> setWeightGoal({
     required String userId,
@@ -480,41 +482,52 @@ class FirestoreService extends GetxService {
       rethrow;
     }
   }
-  
+
   // ========== PROGRESS STATS ==========
-  
+
   /// Get weekly workout duration
   Future<Map<int, int>> getWeeklyDuration({
     required String userId,
     required DateTime weekStart,
   }) async {
     try {
-      final weekEnd = weekStart.add(const Duration(days: 7));
-      
-      print('⏱️ Querying duration from ${weekStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
-      
+      // ✅ FIX: Ensure precise week boundaries (Monday 00:00:00 to next Monday 00:00:00)
+      final normalizedStart =
+          DateTime(weekStart.year, weekStart.month, weekStart.day);
+      final weekEnd = DateTime(weekStart.year, weekStart.month, weekStart.day)
+          .add(const Duration(days: 7));
+
+      print(
+          '⏱️ Querying duration from ${normalizedStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
+      print(
+          '   Week range: ${DateFormat('MMM d').format(normalizedStart)} - ${DateFormat('MMM d, yyyy').format(weekEnd.subtract(const Duration(days: 1)))}');
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('workouts')
-          .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
+          .where('completedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(normalizedStart))
           .where('completedAt', isLessThan: Timestamp.fromDate(weekEnd))
           .get();
-      
-      print('⏱️ Found ${snapshot.docs.length} workouts for duration calculation');
-      
+
+      print(
+          '⏱️ Found ${snapshot.docs.length} workouts for duration calculation');
+
       final Map<int, int> durations = {};
-      
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final date = (data['completedAt'] as Timestamp).toDate();
         final weekday = date.weekday - 1; // 0 = Monday, 6 = Sunday
-        final duration = data['duration'] ?? 0; // ✅ FIXED: Changed from 'totalMinutes' to 'duration'
-        
+        final duration = data['duration'] ??
+            0; // ✅ FIXED: Changed from 'totalMinutes' to 'duration'
+
         durations[weekday] = (durations[weekday] ?? 0) + (duration as int);
-        print('  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${duration} min');
+        print(
+            '  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${duration} min');
       }
-      
+
       print('⏱️ Final durations (in minutes): $durations');
       return durations;
     } catch (e) {
@@ -522,39 +535,50 @@ class FirestoreService extends GetxService {
       return {};
     }
   }
-  
+
   /// Get weekly calories burned
   Future<Map<int, int>> getWeeklyCalories({
     required String userId,
     required DateTime weekStart,
   }) async {
     try {
-      final weekEnd = weekStart.add(const Duration(days: 7));
-      
-      print('🔥 Querying calories from ${weekStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
-      
+      // ✅ FIX: Ensure precise week boundaries (Monday 00:00:00 to next Monday 00:00:00)
+      final normalizedStart =
+          DateTime(weekStart.year, weekStart.month, weekStart.day);
+      final weekEnd = DateTime(weekStart.year, weekStart.month, weekStart.day)
+          .add(const Duration(days: 7));
+
+      print(
+          '🔥 Querying calories from ${normalizedStart.toIso8601String()} to ${weekEnd.toIso8601String()}');
+      print(
+          '   Week range: ${DateFormat('MMM d').format(normalizedStart)} - ${DateFormat('MMM d, yyyy').format(weekEnd.subtract(const Duration(days: 1)))}');
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('workouts')
-          .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
+          .where('completedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(normalizedStart))
           .where('completedAt', isLessThan: Timestamp.fromDate(weekEnd))
           .get();
-      
-      print('🔥 Found ${snapshot.docs.length} workouts for calories calculation');
-      
+
+      print(
+          '🔥 Found ${snapshot.docs.length} workouts for calories calculation');
+
       final Map<int, int> calories = {};
-      
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final date = (data['completedAt'] as Timestamp).toDate();
         final weekday = date.weekday - 1; // 0 = Monday, 6 = Sunday
-        final cal = data['calories'] ?? 0; // ✅ FIXED: Changed from 'totalCalories' to 'calories'
-        
+        final cal = data['calories'] ??
+            0; // ✅ FIXED: Changed from 'totalCalories' to 'calories'
+
         calories[weekday] = (calories[weekday] ?? 0) + (cal as int);
-        print('  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${cal} kcal');
+        print(
+            '  📅 Day ${weekday} (${date.toString().split(' ')[0]}): +${cal} kcal');
       }
-      
+
       print('🔥 Final calories: $calories');
       return calories;
     } catch (e) {
@@ -562,60 +586,63 @@ class FirestoreService extends GetxService {
       return {};
     }
   }
-  
+
   /// Get monthly workout days (for calendar)
-Future<Set<int>> getMonthlyWorkoutDays({
-  required String userId,
-  required int year,
-  required int month,
-}) async {
-  try {
-    final startDate = DateTime(year, month, 1);
-    final endDate = DateTime(year, month + 1, 0, 23, 59, 59); // ✅ Include end of last day
-    
-    print('📅 ========== MONTHLY WORKOUT QUERY ==========');
-    print('   User: $userId');
-    print('   Month: $year-$month');
-    print('   Start: $startDate');
-    print('   End: $endDate');
-    
-    final snapshot = await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('workouts')
-        .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-        .where('completedAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-        .get();
-    
-    print('📅 Found ${snapshot.docs.length} workout documents');
-    
-    final Set<int> workoutDays = {};
-    
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      print('   📄 Document ID: ${doc.id}');
-      print('      Data keys: ${data.keys.toList()}');
-      
-      final completedAt = data['completedAt'];
-      if (completedAt != null) {
-        final date = (completedAt as Timestamp).toDate();
-        workoutDays.add(date.day);
-        print('      ✅ Workout on day ${date.day} (${date})');
-      } else {
-        print('      ⚠️ No completedAt field!');
+  Future<Set<int>> getMonthlyWorkoutDays({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final startDate = DateTime(year, month, 1);
+      final endDate =
+          DateTime(year, month + 1, 0, 23, 59, 59); // ✅ Include end of last day
+
+      print('📅 ========== MONTHLY WORKOUT QUERY ==========');
+      print('   User: $userId');
+      print('   Month: $year-$month');
+      print('   Start: $startDate');
+      print('   End: $endDate');
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('workouts')
+          .where('completedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('completedAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .get();
+
+      print('📅 Found ${snapshot.docs.length} workout documents');
+
+      final Set<int> workoutDays = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        print('   📄 Document ID: ${doc.id}');
+        print('      Data keys: ${data.keys.toList()}');
+
+        final completedAt = data['completedAt'];
+        if (completedAt != null) {
+          final date = (completedAt as Timestamp).toDate();
+          workoutDays.add(date.day);
+          print('      ✅ Workout on day ${date.day} (${date})');
+        } else {
+          print('      ⚠️ No completedAt field!');
+        }
       }
+
+      print('📅 Final workout days set: $workoutDays');
+      print('📅 ==========================================');
+
+      return workoutDays;
+    } catch (e) {
+      print('❌ Error getting monthly workout days: $e');
+      print('   Stack trace: ${StackTrace.current}');
+      return {};
     }
-    
-    print('📅 Final workout days set: $workoutDays');
-    print('📅 ==========================================');
-    
-    return workoutDays;
-  } catch (e) {
-    print('❌ Error getting monthly workout days: $e');
-    print('   Stack trace: ${StackTrace.current}');
-    return {};
   }
-}
 
   /// Get user's total progress stats
   Future<Map<String, dynamic>?> getUserProgressStats(String userId) async {
@@ -641,26 +668,24 @@ Future<Set<int>> getMonthlyWorkoutDays({
   Future<double?> getUserCurrentWeight(String userId) async {
     try {
       print('⚖️ Fetching user weight from profile...');
-      
+
       // First try to get from user profile document
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get();
-      
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+
       if (userDoc.exists) {
         final data = userDoc.data();
-        
+
         // Check top-level weight field
         if (data?['weight'] != null) {
           final weight = (data!['weight'] as num).toDouble();
           print('⚖️ Found weight in profile: $weight kg');
           return weight;
         }
-        
+
         // Check nested onboardingData
         if (data?['onboardingData'] != null) {
-          final onboardingData = data!['onboardingData'] as Map<String, dynamic>;
+          final onboardingData =
+              data!['onboardingData'] as Map<String, dynamic>;
           if (onboardingData['weight'] != null) {
             final weight = (onboardingData['weight'] as num).toDouble();
             print('⚖️ Found weight in onboardingData: $weight kg');
@@ -668,7 +693,7 @@ Future<Set<int>> getMonthlyWorkoutDays({
           }
         }
       }
-      
+
       // Fallback: get latest weight entry from history
       print('⚖️ No weight in profile, checking weight_history...');
       final latestSnapshot = await _firestore
@@ -678,13 +703,14 @@ Future<Set<int>> getMonthlyWorkoutDays({
           .orderBy('date', descending: true)
           .limit(1)
           .get();
-      
+
       if (latestSnapshot.docs.isNotEmpty) {
-        final weight = (latestSnapshot.docs.first.data()['weight'] as num).toDouble();
+        final weight =
+            (latestSnapshot.docs.first.data()['weight'] as num).toDouble();
         print('⚖️ Found weight in history: $weight kg');
         return weight;
       }
-      
+
       print('⚠️ No weight found anywhere');
       return null;
     } catch (e) {
@@ -692,5 +718,4 @@ Future<Set<int>> getMonthlyWorkoutDays({
       return null;
     }
   }
-
 }

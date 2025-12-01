@@ -30,13 +30,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
   DateTime _selectedWeightMonth = DateTime.now();
 
   // Duration tracking (independent)
-  DateTime _selectedDurationWeekStart =
-      DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  // ✅ FIX: Use single DateTime.now() to prevent race condition
+  late DateTime _selectedDurationWeekStart;
   Map<int, int> weeklyDurations = {};
 
   // Calories tracking (independent)
-  DateTime _selectedCaloriesWeekStart =
-      DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  // ✅ FIX: Use single DateTime.now() to prevent race condition
+  late DateTime _selectedCaloriesWeekStart;
   Map<int, int> weeklyCalories = {};
 
   // Monthly workout days
@@ -51,6 +51,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   void initState() {
     super.initState();
+
+    // ✅ FIX: Initialize week starts with single DateTime.now() call
+    final now = DateTime.now();
+    final weekday = now.weekday; // 1 = Monday, 7 = Sunday
+    final daysFromMonday = weekday - 1; // 0 for Monday, 6 for Sunday
+    final mondayThisWeek = now.subtract(Duration(days: daysFromMonday));
+
+    _selectedDurationWeekStart =
+        DateTime(mondayThisWeek.year, mondayThisWeek.month, mondayThisWeek.day);
+    _selectedCaloriesWeekStart =
+        DateTime(mondayThisWeek.year, mondayThisWeek.month, mondayThisWeek.day);
+
+    print(
+        '📅 Week initialized: ${_selectedDurationWeekStart.toString().split(' ')[0]} (${DateFormat('EEEE').format(_selectedDurationWeekStart)})');
+
     _loadProgressData();
   }
 

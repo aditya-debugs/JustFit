@@ -69,10 +69,21 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
   void initState() {
     super.initState();
 
-    // ✅ Play "Woo-hoo" message with proper async handling
-    Future.delayed(const Duration(milliseconds: 300), () async {
+    // ✅ CRITICAL FIX: Force stop background music and play completion audio
+    Future.delayed(const Duration(milliseconds: 100), () async {
       try {
         final audioController = Get.find<WorkoutAudioController>();
+
+        // Stop any ongoing speech first
+        audioController.stopCurrentSpeech();
+
+        // Force stop background music (even if already called)
+        await audioController.stopBackgroundMusic();
+
+        // Small delay to ensure music is stopped
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        // Play only the completion audio
         await audioController.playWorkoutComplete();
       } catch (e) {
         print('⚠️ Could not play workout complete audio: $e');
@@ -195,6 +206,17 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
     _fireworksController.dispose();
     _contentController.dispose();
     _fireworkTimer?.cancel();
+
+    // ✅ CRITICAL FIX: Ensure all audio is cleaned up
+    try {
+      final audioController = Get.find<WorkoutAudioController>();
+      audioController.stopCurrentSpeech();
+      // Force stop background music again (non-awaited is OK in dispose)
+      audioController.stopBackgroundMusic();
+    } catch (e) {
+      print('⚠️ Could not stop audio in dispose: $e');
+    }
+
     super.dispose();
   }
 
@@ -497,58 +519,55 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
         return;
       }
 
-      // 2. Get achievements from result (same for both flows)
+      // 2. Get achievements and streak data from result
       final workoutAchievement =
           result['workoutAchievement'] as AchievementModel?;
       final streakAchievement =
           result['streakAchievement'] as AchievementModel?;
       final currentStreak = result['currentStreak'] as int? ?? 0;
       final weeklyProgress = result['weeklyProgress'] as List<bool>? ?? [];
+      final streakIncremented = result['streakIncremented'] as bool? ?? false;
 
+      print('🔍 ========== WORKOUT COMPLETE NAVIGATION ==========');
       print('🏆 Workout achievement: ${workoutAchievement?.title ?? 'None'}');
-      print('🔥 Streak achievement: ${streakAchievement?.title ?? 'None'}');
-      print('🔥 Current streak: $currentStreak days');
+      print('🔥 Streak: $currentStreak days (incremented: $streakIncremented)');
+      print('🏆 Streak achievement: ${streakAchievement?.title ?? 'None'}');
+      print('⚠️ Is partial workout: ${widget.isPartialWorkout}');
+      print('=====================================================');
 
       if (!mounted) return;
 
-      // 3. NAVIGATION FLOW
+      // ✅ NEW FLOW: Step-by-step navigation based on what exists
 
-      // ✅ Check for workout count achievement FIRST (even for partial workouts)
+      // STEP 1: Check for workout count achievement
       if (workoutAchievement != null) {
-        // Show workout achievement
+        print(
+            '🎯 Step 1: Show WORKOUT ACHIEVEMENT → ${workoutAchievement.title}');
         Navigator.pushReplacement(
           context,
           PageTransitions.scale(
             AchievementScreen(
               achievement: workoutAchievement,
               onContinue: () {
-                // After workout achievement
-                if (widget.isPartialWorkout) {
-                  // Partial workout - go directly to activity tab
+                // After workout achievement, check streak
+                if (streakIncremented && currentStreak >= 1) {
                   print(
-                      '⚠️ Partial workout after achievement - navigating to Activity');
-                  // Pop the achievement screen first, then navigate
-                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => const MainScreen(initialIndex: 2),
-                    ),
-                    (route) => false,
-                  );
-                } else if (currentStreak >= 1) {
-                  // Full workout - show streak screen
+                      '🎯 Step 2: Show STREAK SCREEN (streak: $currentStreak)');
                   Navigator.of(context).pushReplacement(
                     PageTransitions.fadeSlideFromRight(
                       StreakScreen(
                         currentStreak: currentStreak,
                         weeklyProgress: weeklyProgress,
-                        achievement: streakAchievement,
+                        achievement:
+                            streakAchievement, // Will handle its own achievement display
                       ),
                       durationMs: 300,
                     ),
                   );
                 } else {
-                  // No streak - go to activity
-                  Navigator.of(context).pushAndRemoveUntil(
+                  // No streak increment, go to activity
+                  print('🎯 Step 2: Skip streak (no increment) → Activity Tab');
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (context) => const MainScreen(initialIndex: 2),
                     ),
@@ -562,42 +581,33 @@ class _WorkoutCompleteScreenState extends State<WorkoutCompleteScreen>
         return;
       }
 
-      // No workout achievement
-      if (widget.isPartialWorkout) {
-        // Partial workout with no achievement - go straight to activity
-        print('⚠️ Partial workout (no achievement) - navigating to Activity');
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const MainScreen(initialIndex: 2),
-          ),
-          (route) => false,
-        );
-        return;
-      }
-
-      // Full workout with no workout achievement - go to streak screen
-      if (currentStreak >= 1) {
+      // STEP 2: No workout achievement, check streak
+      if (streakIncremented && currentStreak >= 1) {
+        print('🎯 Step 1: Skip workout achievement → Show STREAK SCREEN');
         Navigator.pushReplacement(
           context,
           PageTransitions.fadeSlideFromRight(
             StreakScreen(
               currentStreak: currentStreak,
               weeklyProgress: weeklyProgress,
-              achievement: streakAchievement,
+              achievement:
+                  streakAchievement, // Will handle its own achievement display
             ),
             durationMs: 300,
           ),
         );
-      } else {
-        // No streak - go straight to activity
-        print('📍 No streak - navigating to Activity screen');
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const MainScreen(initialIndex: 2),
-          ),
-          (route) => false,
-        );
+        return;
       }
+
+      // STEP 3: No achievements, no streak increment → Go directly to Activity Tab
+      print(
+          '🎯 Step 1: Skip all → Activity Tab (no achievements, no streak increment)');
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const MainScreen(initialIndex: 2),
+        ),
+        (route) => false,
+      );
     } catch (e) {
       print('❌ Error in save and continue: $e');
       if (mounted) {

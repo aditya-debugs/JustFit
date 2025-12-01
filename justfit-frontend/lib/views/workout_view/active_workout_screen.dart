@@ -22,6 +22,7 @@ import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io' show Platform; // ✅ ADD THIS
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
   final int dayNumber;
@@ -128,6 +129,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     _firestoreService = Get.find<FirestoreService>();
 
     _audioController.setWorkoutPaused(false);
+
+    // Keep screen awake during workout
+    WakelockPlus.enable();
 
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -247,6 +251,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     _videoController?.dispose();
     _nextVideoController?.pause();
     _nextVideoController?.dispose();
+
+    // Allow screen to sleep again
+    WakelockPlus.disable();
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -568,10 +575,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
   }
 
-  void _completeWorkout() {
+  Future<void> _completeWorkout() async {
     _timer?.cancel();
 
-    _audioController.stopBackgroundMusic();
+    // ✅ CRITICAL FIX: Await stopBackgroundMusic before proceeding
+    await _audioController.stopBackgroundMusic();
 
     _showWorkoutCompleteDialog();
   }
@@ -733,16 +741,24 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-      builder: (context, orientation) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF5F5F5),
-          body: SafeArea(
-            child:
-                _isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
-          ),
-        );
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        _showExitDialog();
       },
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF5F5F5),
+            body: SafeArea(
+              child: _isLandscape
+                  ? _buildLandscapeLayout()
+                  : _buildPortraitLayout(),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1577,11 +1593,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               _timer?.cancel();
-              _audioController.stopBackgroundMusic();
-              Navigator.pop(context);
 
+              // Stop background music completely
+              await _audioController.stopBackgroundMusic();
+              _audioController.stopCurrentSpeech();
+
+              Navigator.pop(context);
               _showPartialWorkoutCompleteDialog();
             },
             style: TextButton.styleFrom(
@@ -1608,7 +1627,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
 
   void _showPartialWorkoutCompleteDialog() async {
     _timer?.cancel();
-    _audioController.stopBackgroundMusic();
+
+    // Stop background music completely before navigating
+    await _audioController.stopBackgroundMusic();
+    _audioController.stopCurrentSpeech();
 
     final completedExercises =
         _isGetReadyPhase ? _currentExerciseIndex : _currentExerciseIndex + 1;
@@ -1657,6 +1679,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   void _showWorkoutCompleteDialog() async {
     _timer?.cancel();
 
+    // Stop background music completely before navigating
     await _audioController.stopBackgroundMusic();
     _audioController.stopCurrentSpeech();
     _audioController.setWorkoutPaused(false);

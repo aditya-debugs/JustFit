@@ -138,14 +138,27 @@ class _OnboardingSuccessScreenState extends State<OnboardingSuccessScreen>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildContent(),
-              const Spacer(),
-              _buildNextButton(),
-              const SizedBox(height: 24),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildContent(),
+                        const Spacer(),
+                        _buildNextButton(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
