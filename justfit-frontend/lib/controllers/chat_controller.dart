@@ -346,6 +346,37 @@ class ChatController extends GetxController {
     final context = <String, dynamic>{};
 
     try {
+      // Get user's Firestore data
+      final userId = _userService.currentUser.value?.uid;
+      if (userId != null) {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data();
+
+          // Onboarding data
+          context['age'] = userData?['age'];
+          context['gender'] = userData?['gender'];
+          context['height'] = userData?['height'];
+          context['currentWeight'] = userData?['weight'];
+          context['goalWeight'] = userData?['goalWeight'];
+          context['fitnessLevel'] = userData?['fitnessLevel'];
+          context['activityLevel'] = userData?['activityLevel'];
+          context['primaryGoal'] = userData?['primaryGoal'];
+          context['bodyType'] = userData?['bodyType'];
+          context['desiredBodyType'] = userData?['desiredBodyType'];
+          context['focusAreas'] = userData?['focusAreas'];
+          context['limitations'] = userData?['limitations'];
+
+          // Calculate BMI
+          if (userData?['height'] != null && userData?['weight'] != null) {
+            final heightM = userData!['height'] / 100;
+            final bmi = userData['weight'] / (heightM * heightM);
+            context['bmi'] = bmi.toStringAsFixed(1);
+          }
+        }
+      }
+
+      // Workout plan context
       if (Get.isRegistered<WorkoutPlanController>()) {
         final planController = Get.find<WorkoutPlanController>();
         final plan = planController.currentPlan.value;
@@ -353,21 +384,60 @@ class ChatController extends GetxController {
         if (plan != null) {
           context['currentDay'] = plan.currentDay;
           context['totalDays'] = plan.totalDays;
-          context['goalName'] = plan.planTitle;
+          context['planTitle'] = plan.planTitle;
           context['currentStreak'] = planController.userStreak.value;
+          context['totalWorkoutsCompleted'] =
+              planController.totalWorkoutsCompleted.value;
 
+          // Current day workout details
           final currentDayPlan = plan.getDayByNumber(plan.currentDay);
-          if (currentDayPlan != null && currentDayPlan.intensity.isNotEmpty) {
-            if (currentDayPlan.intensity.contains('Menstruation')) {
-              context['cyclePhase'] = 'Menstruation';
-            } else if (currentDayPlan.intensity.contains('Follicular')) {
-              context['cyclePhase'] = 'Follicular';
-            } else if (currentDayPlan.intensity.contains('Ovulation')) {
-              context['cyclePhase'] = 'Ovulation';
-            } else if (currentDayPlan.intensity.contains('Luteal')) {
-              context['cyclePhase'] = 'Luteal';
+          if (currentDayPlan != null) {
+            context['todaysWorkout'] = {
+              'title': currentDayPlan.title,
+              'duration': currentDayPlan.estimatedDuration,
+              'exercises':
+                  currentDayPlan.exercises.map((e) => e.name).take(5).toList(),
+              'intensity': currentDayPlan.intensity,
+            };
+
+            // Cycle phase for female users
+            if (currentDayPlan.intensity.isNotEmpty) {
+              if (currentDayPlan.intensity.contains('Menstruation')) {
+                context['cyclePhase'] = 'Menstruation';
+              } else if (currentDayPlan.intensity.contains('Follicular')) {
+                context['cyclePhase'] = 'Follicular';
+              } else if (currentDayPlan.intensity.contains('Ovulation')) {
+                context['cyclePhase'] = 'Ovulation';
+              } else if (currentDayPlan.intensity.contains('Luteal')) {
+                context['cyclePhase'] = 'Luteal';
+              }
             }
           }
+        }
+      }
+
+      // Progress data from Firestore
+      if (userId != null) {
+        final progressSnapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('workouts')
+            .where('completedAt',
+                isGreaterThan: Timestamp.fromDate(
+                    DateTime.now().subtract(const Duration(days: 30))))
+            .get();
+
+        if (progressSnapshot.docs.isNotEmpty) {
+          final completedWorkouts = progressSnapshot.docs.length;
+          final totalCalories = progressSnapshot.docs.fold<int>(0,
+              (sum, doc) => sum + (doc.data()['caloriesBurned'] as int? ?? 0));
+          final avgCalories = totalCalories ~/ completedWorkouts;
+
+          context['last30Days'] = {
+            'workoutsCompleted': completedWorkouts,
+            'totalCalories': totalCalories,
+            'avgCaloriesPerWorkout': avgCalories,
+          };
         }
       }
     } catch (e) {
