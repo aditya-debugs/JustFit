@@ -108,8 +108,16 @@ class ChatController extends GetxController {
 
       if (cachedJson != null) {
         final List<dynamic> cachedData = jsonDecode(cachedJson);
-        messages.value =
+        final loadedMessages =
             cachedData.map((json) => ChatMessage.fromJson(json)).toList();
+
+        // Debug: Verify all loaded messages have isNew=false
+        print('   🔍 Loaded ${loadedMessages.length} messages from cache');
+        final newCount = loadedMessages.where((m) => m.isNew).length;
+        print('   📊 Messages with isNew=true: $newCount (should be 0)');
+
+        // Replace entire list to ensure clean state
+        messages.value = loadedMessages;
 
         final duration = DateTime.now().difference(startTime).inMilliseconds;
         print(
@@ -120,7 +128,9 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       print('   ⚠️ Cache load failed: $e');
-      _addWelcomeMessage();
+      if (messages.isEmpty) {
+        _addWelcomeMessage();
+      }
     }
   }
 
@@ -305,12 +315,15 @@ class ChatController extends GetxController {
         print('✅ AI Response received');
         print('🤖 Assistant: ${data['response'].substring(0, 50)}...');
 
-        // Add AI response
-        messages.add(ChatMessage(
+        // Add AI response with isNew=true for typewriter effect
+        final newMessage = ChatMessage(
           role: 'assistant',
           content: data['response'],
           isNew: true, // ✅ This is a new message - show typewriter effect
-        ));
+        );
+
+        print('🆕 Adding new message with isNew=${newMessage.isNew}');
+        messages.add(newMessage);
 
         if (data['suggestions'] != null &&
             (data['suggestions'] as List).isNotEmpty) {
@@ -386,18 +399,17 @@ class ChatController extends GetxController {
           context['totalDays'] = plan.totalDays;
           context['planTitle'] = plan.planTitle;
           context['currentStreak'] = planController.userStreak.value;
-          context['totalWorkoutsCompleted'] =
-              planController.totalWorkoutsCompleted.value;
+          context['completedDays'] = plan.completedDays;
 
           // Current day workout details
           final currentDayPlan = plan.getDayByNumber(plan.currentDay);
           if (currentDayPlan != null) {
             context['todaysWorkout'] = {
-              'title': currentDayPlan.title,
+              'title': currentDayPlan.dayTitle,
               'duration': currentDayPlan.estimatedDuration,
-              'exercises':
-                  currentDayPlan.exercises.map((e) => e.name).take(5).toList(),
+              'focusArea': currentDayPlan.focusArea,
               'intensity': currentDayPlan.intensity,
+              'isRestDay': currentDayPlan.isRestDay,
             };
 
             // Cycle phase for female users
@@ -487,10 +499,21 @@ class ChatController extends GetxController {
   }
 
   void _addWelcomeMessage() {
-    messages.add(ChatMessage(
-      role: 'assistant',
-      content: 'Hi! 👋 I\'m your fitness coach. How can I help you today?',
-      isNew: true, // ✅ Show typewriter for welcome message
-    ));
+    // Check if welcome message already exists to avoid duplicates
+    final hasWelcome = messages.any((msg) =>
+        msg.role == 'assistant' &&
+        msg.content.contains('I\'m your fitness coach'));
+
+    if (!hasWelcome) {
+      final welcomeMsg = ChatMessage(
+        role: 'assistant',
+        content: 'Hi! 👋 I\'m your fitness coach. How can I help you today?',
+        isNew: true, // Show typewriter for first time only
+      );
+      messages.add(welcomeMsg);
+      // Save immediately so it persists
+      _saveToCache();
+      print('   ✅ Welcome message added and saved');
+    }
   }
 }

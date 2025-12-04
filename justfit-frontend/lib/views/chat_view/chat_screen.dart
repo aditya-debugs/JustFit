@@ -11,7 +11,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final ChatController _controller = Get.put(ChatController());
+  // ✅ PERMANENT controller - survives screen disposal and app restarts
+  final ChatController _controller = Get.put(ChatController(), permanent: true);
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
